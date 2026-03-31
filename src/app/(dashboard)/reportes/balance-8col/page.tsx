@@ -26,9 +26,9 @@ export default async function Balance8ColPage({
     supabase.rpc('conta.get_account_balances', { p_company_id: companyId, p_year: year, p_month_from: 1, p_month_to: month }),
   ])
 
-  const prevMap = new Map((prevRes.data ?? []).map((b: AccountBalance) => [b.code, b]))
-  const movMap  = new Map((movRes.data ?? []).map((b: AccountBalance) => [b.code, b]))
-  const currMap = new Map((currRes.data ?? []).map((b: AccountBalance) => [b.code, b]))
+  const prevMap = new Map(((prevRes.data ?? []) as AccountBalance[]).map(b => [b.code, b]))
+  const movMap  = new Map(((movRes.data ?? []) as AccountBalance[]).map(b => [b.code, b]))
+  const currMap = new Map(((currRes.data ?? []) as AccountBalance[]).map(b => [b.code, b]))
 
   // Unión de todos los códigos con movimiento
   const allCodes = new Set([...prevMap.keys(), ...movMap.keys(), ...currMap.keys()])
