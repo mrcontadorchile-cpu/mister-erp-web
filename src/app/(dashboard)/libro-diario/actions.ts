@@ -39,7 +39,7 @@ export async function createJournalEntry(data: {
   const month = entryDate.getMonth() + 1
 
   let { data: period } = await supabase
-    .from('conta.periods')
+    .schema('conta').from('periods')
     .select('id, status')
     .eq('company_id', companyId)
     .eq('year', year)
@@ -48,7 +48,7 @@ export async function createJournalEntry(data: {
 
   if (!period) {
     const { data: newPeriod, error: pe } = await supabase
-      .from('conta.periods')
+      .schema('conta').from('periods')
       .insert({ company_id: companyId, year, month, status: 'open' })
       .select('id, status')
       .single()
@@ -62,14 +62,14 @@ export async function createJournalEntry(data: {
 
   // Siguiente número de asiento
   const { count } = await supabase
-    .from('conta.journal_entries')
+    .schema('conta').from('journal_entries')
     .select('*', { count: 'exact', head: true })
     .eq('company_id', companyId)
   const number = (count ?? 0) + 1
 
   // Crear asiento
   const { data: entry, error: ee } = await supabase
-    .from('conta.journal_entries')
+    .schema('conta').from('journal_entries')
     .insert({
       company_id: companyId,
       period_id: period!.id,
@@ -86,7 +86,7 @@ export async function createJournalEntry(data: {
   if (ee) return { error: ee.message }
 
   // Insertar líneas
-  const { error: le } = await supabase.from('conta.journal_lines').insert(
+  const { error: le } = await supabase.schema('conta').from('journal_lines').insert(
     data.lines.map(l => ({
       entry_id: entry.id,
       account_id: l.account_id,
@@ -111,7 +111,7 @@ export async function reverseJournalEntry(entryId: string) {
 
   // Obtener asiento original con líneas
   const { data: entry } = await supabase
-    .from('conta.journal_entries')
+    .schema('conta').from('journal_entries')
     .select('*, conta_journal_lines(*)')
     .eq('id', entryId)
     .single()
@@ -126,7 +126,7 @@ export async function reverseJournalEntry(entryId: string) {
 
   // Obtener o crear período actual
   let { data: period } = await supabase
-    .from('conta.periods')
+    .schema('conta').from('periods')
     .select('id, status')
     .eq('company_id', companyId)
     .eq('year', year).eq('month', month)
@@ -134,7 +134,7 @@ export async function reverseJournalEntry(entryId: string) {
 
   if (!period) {
     const { data: np } = await supabase
-      .from('conta.periods')
+      .schema('conta').from('periods')
       .insert({ company_id: companyId, year, month, status: 'open' })
       .select('id, status').single()
     period = np
@@ -143,13 +143,13 @@ export async function reverseJournalEntry(entryId: string) {
   if (period!.status === 'closed') return { error: 'El período actual está cerrado' }
 
   const { count } = await supabase
-    .from('conta.journal_entries')
+    .schema('conta').from('journal_entries')
     .select('*', { count: 'exact', head: true })
     .eq('company_id', companyId)
   const number = (count ?? 0) + 1
 
   const { data: reversal, error: re } = await supabase
-    .from('conta.journal_entries')
+    .schema('conta').from('journal_entries')
     .insert({
       company_id: companyId,
       period_id: period!.id,
@@ -166,7 +166,7 @@ export async function reverseJournalEntry(entryId: string) {
   if (re) return { error: re.message }
 
   const lines = (entry.conta_journal_lines ?? []) as { account_id: string; cost_center_id: string | null; debit: number; credit: number; description: string | null }[]
-  await supabase.from('conta.journal_lines').insert(
+  await supabase.schema('conta').from('journal_lines').insert(
     lines.map(l => ({
       entry_id: reversal.id,
       account_id: l.account_id,
@@ -178,7 +178,7 @@ export async function reverseJournalEntry(entryId: string) {
   )
 
   // Marcar original como revertido
-  await supabase.from('conta.journal_entries')
+  await supabase.schema('conta').from('journal_entries')
     .update({ status: 'reversed' }).eq('id', entryId)
 
   revalidatePath('/libro-diario')

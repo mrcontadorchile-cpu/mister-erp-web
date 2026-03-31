@@ -9,7 +9,7 @@ export default async function CentrosCostoPage() {
     .from('user_profiles').select('company_id').eq('id', user!.id).single()
 
   const { data: items } = await supabase
-    .from('conta.cost_centers')
+    .schema('conta').from('cost_centers')
     .select('*')
     .eq('company_id', profile?.company_id)
     .order('code')

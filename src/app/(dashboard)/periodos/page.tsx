@@ -12,7 +12,7 @@ export default async function PeriodosPage() {
   const currentYear = now.getFullYear()
 
   const { data: periods } = await supabase
-    .from('conta.periods')
+    .schema('conta').from('periods')
     .select('*')
     .eq('company_id', profile?.company_id)
     .order('year', { ascending: false })

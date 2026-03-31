@@ -17,7 +17,7 @@ export default async function JournalEntryDetailPage({
     .from('user_profiles').select('company_id').eq('id', user!.id).single()
 
   const { data: entry } = await supabase
-    .from('conta.journal_entries')
+    .schema('conta').from('journal_entries')
     .select(`
       id, number, date, glosa, type, status, created_at,
       conta_journal_lines(

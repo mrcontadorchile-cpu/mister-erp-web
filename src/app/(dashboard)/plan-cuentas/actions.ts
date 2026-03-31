@@ -20,11 +20,11 @@ export async function createAccount(data: {
   let level = 1
   if (data.parent_id) {
     const { data: parent } = await supabase
-      .from('conta.accounts').select('level').eq('id', data.parent_id).single()
+      .schema('conta').from('accounts').select('level').eq('id', data.parent_id).single()
     level = (parent?.level ?? 0) + 1
   }
 
-  const { error } = await supabase.from('conta.accounts').insert({
+  const { error } = await supabase.schema('conta').from('accounts').insert({
     company_id: profile!.company_id,
     code: data.code,
     name: data.name,
@@ -51,7 +51,7 @@ export async function updateAccount(id: string, data: {
   cost_center_required: boolean
 }) {
   const supabase = await createClient()
-  const { error } = await supabase.from('conta.accounts').update({
+  const { error } = await supabase.schema('conta').from('accounts').update({
     code: data.code,
     name: data.name,
     type: data.type,
@@ -67,7 +67,7 @@ export async function updateAccount(id: string, data: {
 
 export async function toggleAccount(id: string, active: boolean) {
   const supabase = await createClient()
-  const { error } = await supabase.from('conta.accounts')
+  const { error } = await supabase.schema('conta').from('accounts')
     .update({ active }).eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/plan-cuentas')

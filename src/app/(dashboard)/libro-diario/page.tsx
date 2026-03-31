@@ -27,7 +27,7 @@ export default async function LibroDiarioPage({
   const month = parseInt(params.month ?? String(now.getMonth() + 1))
 
   const { data: period } = await supabase
-    .from('conta.periods')
+    .schema('conta').from('periods')
     .select('id, status')
     .eq('company_id', companyId)
     .eq('year', year).eq('month', month)
@@ -36,7 +36,7 @@ export default async function LibroDiarioPage({
   let entries: any[] = []
   if (period) {
     const { data } = await supabase
-      .from('conta.journal_entries')
+      .schema('conta').from('journal_entries')
       .select(`id, number, date, glosa, type, status, conta_journal_lines(debit, credit)`)
       .eq('period_id', period.id)
       .order('number')

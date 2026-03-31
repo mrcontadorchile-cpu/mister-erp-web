@@ -15,7 +15,7 @@ export default async function DocumentosSiiPage({
   const companyId = profile?.company_id as string
 
   let query = supabase
-    .from('conta.tax_documents')
+    .schema('conta').from('tax_documents')
     .select('*')
     .eq('company_id', companyId)
     .order('date', { ascending: false })

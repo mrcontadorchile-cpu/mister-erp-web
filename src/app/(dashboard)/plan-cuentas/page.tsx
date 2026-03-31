@@ -9,7 +9,7 @@ export default async function PlanCuentasPage() {
     .from('user_profiles').select('company_id').eq('id', user!.id).single()
 
   const { data: accounts } = await supabase
-    .from('conta.accounts')
+    .schema('conta').from('accounts')
     .select('*')
     .eq('company_id', profile?.company_id)
     .order('code')

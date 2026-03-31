@@ -18,7 +18,7 @@ export default async function DashboardPage() {
 
   // Período actual
   const { data: period } = await supabase
-    .from('conta.periods')
+    .schema('conta').from('periods')
     .select('*')
     .eq('company_id', companyId)
     .eq('year', year)
@@ -27,14 +27,14 @@ export default async function DashboardPage() {
 
   // Conteos en paralelo
   const [journalRes, taxRes, pendingRes] = await Promise.all([
-    supabase.from('conta.journal_entries')
+    supabase.schema('conta').from('journal_entries')
       .select('*', { count: 'exact', head: true })
       .eq('company_id', companyId)
       .eq('status', 'posted'),
-    supabase.from('conta.tax_documents')
+    supabase.schema('conta').from('tax_documents')
       .select('*', { count: 'exact', head: true })
       .eq('company_id', companyId),
-    supabase.from('conta.tax_documents')
+    supabase.schema('conta').from('tax_documents')
       .select('*', { count: 'exact', head: true })
       .eq('company_id', companyId)
       .eq('status', 'pending'),

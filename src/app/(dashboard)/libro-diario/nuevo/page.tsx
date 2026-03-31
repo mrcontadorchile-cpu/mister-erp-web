@@ -9,13 +9,13 @@ export default async function NuevoAsientoPage() {
     .from('user_profiles').select('company_id').eq('id', user!.id).single()
 
   const [accsRes, ccRes] = await Promise.all([
-    supabase.from('conta.accounts')
+    supabase.schema('conta').from('accounts')
       .select('id, code, name, type, nature, cost_center_required')
       .eq('company_id', profile?.company_id)
       .eq('allows_entry', true)
       .eq('active', true)
       .order('code'),
-    supabase.from('conta.cost_centers')
+    supabase.schema('conta').from('cost_centers')
       .select('id, code, name')
       .eq('company_id', profile?.company_id)
       .eq('active', true)

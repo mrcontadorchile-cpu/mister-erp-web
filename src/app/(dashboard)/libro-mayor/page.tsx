@@ -21,7 +21,7 @@ export default async function LibroMayorPage({
 
   // Cuentas que permiten movimiento
   const { data: accounts } = await supabase
-    .from('conta.accounts')
+    .schema('conta').from('accounts')
     .select('id, code, name, type, nature')
     .eq('company_id', companyId)
     .eq('allows_entry', true)
@@ -65,7 +65,7 @@ export default async function LibroMayorPage({
 
     // Período actual
     const { data: period } = await supabase
-      .from('conta.periods')
+      .schema('conta').from('periods')
       .select('id')
       .eq('company_id', companyId)
       .eq('year', year)
@@ -74,7 +74,7 @@ export default async function LibroMayorPage({
 
     if (period) {
       const { data } = await supabase
-        .from('conta.journal_lines')
+        .schema('conta').from('journal_lines')
         .select(`
           id, debit, credit, description,
           conta_journal_entries!inner(number, date, glosa, status, period_id)
