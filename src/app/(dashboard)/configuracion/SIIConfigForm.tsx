@@ -45,6 +45,7 @@ export function SIIConfigForm({
   const [certPass, setCertPass]     = useState('')
   const [certExp, setCertExp]       = useState(certExpiresAt)
   const [certSubjectLocal, setCertSubjectLocal] = useState(certSubject)
+  const [certOwnerRut, setCertOwnerRut] = useState('')
 
   const flash = (msg: string, isError = false) => {
     if (isError) { setError(msg); setSuccess('') }
@@ -88,10 +89,11 @@ export function SIIConfigForm({
       const arrayBuffer = await certFile.arrayBuffer()
       const b64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
       const r = await saveSiiCertificate({
-        cert_data: b64,
-        cert_password: certPass,
-        cert_subject: certSubjectLocal,
+        cert_data:       b64,
+        cert_password:   certPass,
+        cert_subject:    certSubjectLocal,
         cert_expires_at: certExp,
+        cert_owner_rut:  certOwnerRut,
       })
       if (r.error) flash(r.error, true)
       else flash('Certificado guardado correctamente')
@@ -304,10 +306,19 @@ export function SIIConfigForm({
                   <label className="text-xs text-text-disabled block mb-1">Fecha de vencimiento</label>
                   <input type="date" value={certExp} onChange={e => setCertExp(e.target.value)} className="input text-sm" />
                 </div>
-                <div className="col-span-2">
+                <div>
                   <label className="text-xs text-text-disabled block mb-1">Nombre del titular (CN)</label>
                   <input value={certSubjectLocal} onChange={e => setCertSubjectLocal(e.target.value)}
-                    className="input text-sm" placeholder="Ej: MISTER CONTADOR SPA" />
+                    className="input text-sm" placeholder="Ej: JUAN PEREZ GONZALEZ" />
+                </div>
+                <div>
+                  <label className="text-xs text-text-disabled block mb-1">
+                    RUT del titular del certificado
+                    <span className="text-text-disabled font-normal ml-1">(si difiere del RUT empresa)</span>
+                  </label>
+                  <input value={certOwnerRut} onChange={e => setCertOwnerRut(e.target.value)}
+                    className="input text-sm font-mono" placeholder="Ej: 12345678-9" />
+                  <p className="text-xs text-text-disabled mt-1">Solo si el cert. fue emitido a nombre de una persona natural</p>
                 </div>
               </div>
 

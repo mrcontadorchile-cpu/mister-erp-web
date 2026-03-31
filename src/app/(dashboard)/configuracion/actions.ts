@@ -158,6 +158,7 @@ export async function saveSiiCertificate(data: {
   cert_password: string
   cert_subject: string
   cert_expires_at: string
+  cert_owner_rut?: string
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -169,12 +170,13 @@ export async function saveSiiCertificate(data: {
   const { error } = await supabase
     .from('company_sii_configs')
     .upsert({
-      company_id: companyId,
-      cert_enabled: true,
-      cert_data: data.cert_data,
-      cert_password: data.cert_password,
-      cert_subject: data.cert_subject,
-      cert_expires_at: data.cert_expires_at || null,
+      company_id:       companyId,
+      cert_enabled:     true,
+      cert_data:        data.cert_data,
+      cert_password:    data.cert_password,
+      cert_subject:     data.cert_subject,
+      cert_owner_rut:   data.cert_owner_rut || null,
+      cert_expires_at:  data.cert_expires_at || null,
     }, { onConflict: 'company_id' })
 
   if (error) return { error: error.message }

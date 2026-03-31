@@ -16,10 +16,11 @@ interface Props {
 type DocType = 'FACTURA_COMPRA' | 'FACTURA_VENTA' | 'BOLETA_HONORARIO'
 
 interface Result {
-  imported: number
-  journalized: number
-  skipped: number
-  errors: string[]
+  imported:       number
+  journalized:    number
+  skipped:        number
+  errors:         string[]
+  quotaRemaining: number | null
 }
 
 export function ImportarSiiClient({ companyId, savedRut, hasPassword }: Props) {
@@ -30,9 +31,10 @@ export function ImportarSiiClient({ companyId, savedRut, hasPassword }: Props) {
   const [useCustomCreds, setUseCustomCreds] = useState(!hasPassword)
   const [rut,   setRut]   = useState(savedRut)
   const [pass,  setPass]  = useState('')
-  const [loading, setLoading] = useState(false)
-  const [result,  setResult]  = useState<Result | null>(null)
-  const [error,   setError]   = useState<string | null>(null)
+  const [loading,        setLoading]        = useState(false)
+  const [result,         setResult]         = useState<Result | null>(null)
+  const [error,          setError]          = useState<string | null>(null)
+  const [quotaRemaining, setQuotaRemaining] = useState<number | null>(null)
 
   async function handleImport(e: React.FormEvent) {
     e.preventDefault()
@@ -57,8 +59,8 @@ export function ImportarSiiClient({ companyId, savedRut, hasPassword }: Props) {
       })
 
       if (fnError) throw new Error(fnError.message)
-      // La Edge Function siempre devuelve HTTP 200; los errores vienen en data.error
       if (data?.error) throw new Error(data.error)
+      if (data?.quotaRemaining != null) setQuotaRemaining(data.quotaRemaining)
       setResult(data)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al importar')
@@ -81,6 +83,26 @@ export function ImportarSiiClient({ companyId, savedRut, hasPassword }: Props) {
           Descarga y contabiliza automáticamente documentos del SII
         </p>
       </div>
+
+      {/* Badge cuota SimpleAPI */}
+      {quotaRemaining !== null && (
+        <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs mb-4 ${
+          quotaRemaining > 20
+            ? 'bg-success/5 border-success/20 text-success'
+            : quotaRemaining > 5
+            ? 'bg-warning/5 border-warning/20 text-warning'
+            : 'bg-error/5 border-error/20 text-error'
+        }`}>
+          <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span>
+            <strong>Consultas API restantes:</strong> {quotaRemaining}
+            {quotaRemaining <= 5 && ' — ¡cuota casi agotada!'}
+          </span>
+        </div>
+      )}
 
       {/* Estado credenciales */}
       <div className={`flex items-center gap-3 p-3 rounded-lg border text-sm mb-6 ${
