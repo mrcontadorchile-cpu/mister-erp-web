@@ -1,0 +1,75 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+
+export async function createAccount(data: {
+  code: string
+  name: string
+  type: string
+  nature: string
+  parent_id: string | null
+  allows_entry: boolean
+  cost_center_required: boolean
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: profile } = await supabase
+    .from('user_profiles').select('company_id').eq('id', user!.id).single()
+
+  let level = 1
+  if (data.parent_id) {
+    const { data: parent } = await supabase
+      .from('conta.accounts').select('level').eq('id', data.parent_id).single()
+    level = (parent?.level ?? 0) + 1
+  }
+
+  const { error } = await supabase.from('conta.accounts').insert({
+    company_id: profile!.company_id,
+    code: data.code,
+    name: data.name,
+    type: data.type,
+    nature: data.nature,
+    parent_id: data.parent_id || null,
+    level,
+    allows_entry: data.allows_entry,
+    cost_center_required: data.cost_center_required,
+    active: true,
+  })
+
+  if (error) return { error: error.message }
+  revalidatePath('/plan-cuentas')
+  return { success: true }
+}
+
+export async function updateAccount(id: string, data: {
+  code: string
+  name: string
+  type: string
+  nature: string
+  allows_entry: boolean
+  cost_center_required: boolean
+}) {
+  const supabase = await createClient()
+  const { error } = await supabase.from('conta.accounts').update({
+    code: data.code,
+    name: data.name,
+    type: data.type,
+    nature: data.nature,
+    allows_entry: data.allows_entry,
+    cost_center_required: data.cost_center_required,
+  }).eq('id', id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/plan-cuentas')
+  return { success: true }
+}
+
+export async function toggleAccount(id: string, active: boolean) {
+  const supabase = await createClient()
+  const { error } = await supabase.from('conta.accounts')
+    .update({ active }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/plan-cuentas')
+  return { success: true }
+}
