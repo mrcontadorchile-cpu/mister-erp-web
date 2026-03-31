@@ -54,7 +54,7 @@ export default async function DashboardPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-text-primary">Dashboard</h1>
         <p className="text-text-secondary text-sm mt-1">
-          {(profile?.companies as { name: string } | null)?.name ?? ''}
+          {(profile?.companies as unknown as { name: string } | null)?.name ?? ''}
         </p>
       </div>
 
