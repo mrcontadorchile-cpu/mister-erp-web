@@ -57,6 +57,8 @@ export function ImportarSiiClient({ companyId, savedRut, hasPassword }: Props) {
       })
 
       if (fnError) throw new Error(fnError.message)
+      // La Edge Function siempre devuelve HTTP 200; los errores vienen en data.error
+      if (data?.error) throw new Error(data.error)
       setResult(data)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al importar')
@@ -232,7 +234,7 @@ export function ImportarSiiClient({ companyId, savedRut, hasPassword }: Props) {
                 <p className="text-xs text-text-disabled mt-1">Ya existían</p>
               </div>
             </div>
-            {result.errors.length > 0 && (
+            {(result.errors?.length ?? 0) > 0 && (
               <div className="space-y-1">
                 {result.errors.map((e, i) => (
                   <p key={i} className="text-xs text-error">{e}</p>
