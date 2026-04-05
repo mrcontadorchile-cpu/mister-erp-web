@@ -6,13 +6,15 @@ const nextConfig: NextConfig = {
       allowedOrigins: ['erp.mistercontador.cl', 'localhost:3000'],
     },
   },
-  async redirects() {
+  async rewrites() {
     return [
-      // Redirect bare /inventario to /inventario/ so Flutter SPA loads correctly
       {
         source: '/inventario',
-        destination: '/inventario/',
-        permanent: false,
+        destination: '/inventario/index.html',
+      },
+      {
+        source: '/inventario/',
+        destination: '/inventario/index.html',
       },
     ]
   },
