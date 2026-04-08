@@ -125,6 +125,7 @@ export async function updateCompany(data: {
 
 export async function saveSiiConfig(data: {
   sii_rut: string
+  sii_rut_usuario?: string
   sii_password: string
 }) {
   const supabase = await createClient()
@@ -139,6 +140,9 @@ export async function saveSiiConfig(data: {
     company_id: companyId,
     sii_rut: data.sii_rut,
     cert_enabled: false,
+  }
+  if (data.sii_rut_usuario) {
+    updateData.sii_rut_usuario = data.sii_rut_usuario
   }
   if (data.sii_password) {
     updateData.sii_password = data.sii_password

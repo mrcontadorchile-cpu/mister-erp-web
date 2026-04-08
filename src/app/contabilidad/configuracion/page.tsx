@@ -28,7 +28,7 @@ export default async function ConfiguracionPage() {
 
   const { data: siiConfig } = await supabase
     .from('company_sii_configs')
-    .select('sii_rut, cert_enabled, cert_subject, cert_expires_at, last_sync_at, last_sync_status, last_sync_message, sii_token, sii_token_obtained_at')
+    .select('sii_rut, sii_rut_usuario, cert_enabled, cert_subject, cert_expires_at, last_sync_at, last_sync_status, last_sync_message, sii_token, sii_token_obtained_at')
     .eq('company_id', profile?.company_id)
     .maybeSingle()
 
@@ -70,6 +70,7 @@ export default async function ConfiguracionPage() {
           </div>
           <SIIConfigForm
             siiRut={siiConfig?.sii_rut ?? ''}
+            siiRutUsuario={siiConfig?.sii_rut_usuario ?? ''}
             certEnabled={siiConfig?.cert_enabled ?? false}
             certSubject={siiConfig?.cert_subject ?? ''}
             certExpiresAt={siiConfig?.cert_expires_at ?? ''}

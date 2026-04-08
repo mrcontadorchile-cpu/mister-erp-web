@@ -5,6 +5,7 @@ import { saveSiiConfig, saveSiiCertificate, saveManualToken, clearSiiToken } fro
 
 interface Props {
   siiRut: string
+  siiRutUsuario: string
   certEnabled: boolean
   certSubject: string
   certExpiresAt: string
@@ -17,6 +18,7 @@ interface Props {
 
 export function SIIConfigForm({
   siiRut,
+  siiRutUsuario,
   certEnabled,
   certSubject,
   certExpiresAt,
@@ -32,8 +34,9 @@ export function SIIConfigForm({
   const [error, setError]   = useState('')
 
   // Clave tributaria
-  const [rut, setRut]     = useState(siiRut)
-  const [pass, setPass]   = useState('')
+  const [rut, setRut]           = useState(siiRut)
+  const [rutUsuario, setRutUsuario] = useState(siiRutUsuario)
+  const [pass, setPass]         = useState('')
   const [showPass, setShowPass] = useState(false)
 
   // Token manual
@@ -56,7 +59,7 @@ export function SIIConfigForm({
   const handleSaveClave = async (e: React.FormEvent) => {
     e.preventDefault()
     startTransition(async () => {
-      const r = await saveSiiConfig({ sii_rut: rut, sii_password: pass })
+      const r = await saveSiiConfig({ sii_rut: rut, sii_rut_usuario: rutUsuario, sii_password: pass })
       if (r.error) flash(r.error, true)
       else flash('Credenciales guardadas correctamente')
     })
@@ -223,6 +226,16 @@ export function SIIConfigForm({
                   <p className="text-xs text-text-disabled mt-1">Sin puntos, con guión</p>
                 </div>
                 <div>
+                  <label className="text-xs text-text-disabled block mb-1">RUT usuario SII</label>
+                  <input
+                    value={rutUsuario}
+                    onChange={e => setRutUsuario(e.target.value)}
+                    className="input text-sm font-mono"
+                    placeholder="18537850-0"
+                  />
+                  <p className="text-xs text-text-disabled mt-1">RUT del representante legal</p>
+                </div>
+                <div className="col-span-2">
                   <label className="text-xs text-text-disabled block mb-1">
                     Clave SII
                     {siiRut && <span className="text-success ml-2">● Guardada</span>}
@@ -254,8 +267,8 @@ export function SIIConfigForm({
                   </div>
                 </div>
               </div>
-              <button type="submit" disabled={isPending} className="btn-ghost px-5 text-sm">
-                {isPending ? 'Guardando...' : 'Guardar credenciales'}
+              <button type="submit" disabled={isPending} className="btn-primary w-full py-2.5">
+                {isPending ? 'Guardando...' : 'Guardar credenciales SII'}
               </button>
             </form>
           )}
