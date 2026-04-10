@@ -2,14 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-/**
- * Handles Supabase auth callbacks: email confirmations, magic links, invites.
- * After token exchange, redirects to the app.
- */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
-  const code  = searchParams.get('code')
-  const next  = searchParams.get('next') ?? '/'
+  const code = searchParams.get('code')
+  const type = searchParams.get('type') // 'recovery' | 'invite' | undefined
+  const next = searchParams.get('next') ?? '/'
 
   if (code) {
     const cookieStore = await cookies()
@@ -31,15 +28,17 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error && data.user) {
-      // Ensure user_profiles row exists (first time invite acceptance)
+      // Ensure user_profiles row exists
       await supabase.from('user_profiles').upsert({
         id:         data.user.id,
-        full_name:  data.user.user_metadata?.full_name ?? data.user.email?.split('@')[0] ?? 'Usuario',
+        full_name:  data.user.user_metadata?.full_name
+                    ?? data.user.email?.split('@')[0]
+                    ?? 'Usuario',
         role:       'user',
         company_id: null,
       }, { onConflict: 'id', ignoreDuplicates: true })
 
-      // If they have a pending/invited membership, activate it and set their active company
+      // Activate invited membership and set active company
       const { data: membership } = await supabase
         .from('user_company_memberships')
         .select('company_id')
@@ -53,18 +52,33 @@ export async function GET(request: NextRequest) {
           .from('user_profiles')
           .update({ company_id: membership.company_id })
           .eq('id', data.user.id)
+          .is('company_id', null) // only set if not already set
 
         await supabase
           .from('user_company_memberships')
           .update({ status: 'active' })
           .eq('user_id', data.user.id)
           .eq('company_id', membership.company_id)
+          .eq('status', 'invited')
+      }
+
+      // Redirect based on flow type
+      if (type === 'recovery') {
+        return NextResponse.redirect(`${origin}/auth/nueva-contrasena`)
+      }
+
+      // For invite flow: check if user has no password set (new user)
+      const hasPassword = data.user.user_metadata?.has_password !== false
+      const isNewInvite = !hasPassword || data.user.app_metadata?.provider === 'email' && !data.user.last_sign_in_at
+
+      // If it looks like a first-time invite, send to password setup
+      if (!data.user.last_sign_in_at || type === 'invite') {
+        return NextResponse.redirect(`${origin}/auth/configurar-cuenta`)
       }
 
       return NextResponse.redirect(`${origin}${next}`)
     }
   }
 
-  // Something went wrong
-  return NextResponse.redirect(`${origin}/login?error=invite_invalid`)
+  return NextResponse.redirect(`${origin}/login?error=link_invalido`)
 }
