@@ -6,61 +6,67 @@ import { createClient } from '@/lib/supabase/server'
 async function getContext() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('No autenticado')
+  if (!user) return null
 
   const { data: profile } = await supabase
     .from('user_profiles')
     .select('company_id')
     .eq('id', user.id)
     .single()
-  if (!profile?.company_id) throw new Error('Sin empresa activa')
+  if (!profile?.company_id) return null
 
   return { supabase, userId: user.id, companyId: profile.company_id as string }
 }
 
-/** Change a user's role within the active company */
-export async function changeUserRole(membershipId: string, roleId: string) {
-  const { supabase, userId, companyId } = await getContext()
-  const { error } = await supabase.rpc('update_member_role', {
-    p_caller_id:     userId,
-    p_company_id:    companyId,
+type ActionResult = { ok: true } | { ok: false; error: string }
+
+export async function changeUserRole(membershipId: string, roleId: string): Promise<ActionResult> {
+  const ctx = await getContext()
+  if (!ctx) return { ok: false, error: 'No autenticado' }
+
+  const { error } = await ctx.supabase.rpc('update_member_role', {
+    p_caller_id:     ctx.userId,
+    p_company_id:    ctx.companyId,
     p_membership_id: membershipId,
     p_new_role_id:   roleId,
   })
-  if (error) throw new Error(error.message)
+  if (error) return { ok: false, error: error.message }
   revalidatePath('/sistema/usuarios')
+  return { ok: true }
 }
 
-/** Suspend or reactivate a user */
-export async function changeUserStatus(membershipId: string, status: 'active' | 'suspended') {
-  const { supabase, userId, companyId } = await getContext()
-  const { error } = await supabase.rpc('update_member_status', {
-    p_caller_id:     userId,
-    p_company_id:    companyId,
+export async function changeUserStatus(membershipId: string, status: 'active' | 'suspended'): Promise<ActionResult> {
+  const ctx = await getContext()
+  if (!ctx) return { ok: false, error: 'No autenticado' }
+
+  const { error } = await ctx.supabase.rpc('update_member_status', {
+    p_caller_id:     ctx.userId,
+    p_company_id:    ctx.companyId,
     p_membership_id: membershipId,
     p_status:        status,
   })
-  if (error) throw new Error(error.message)
+  if (error) return { ok: false, error: error.message }
   revalidatePath('/sistema/usuarios')
+  return { ok: true }
 }
 
-/** Invite a user by email to join the active company with a given role */
-export async function inviteUserByEmail(email: string, roleId: string) {
-  const { supabase, userId, companyId } = await getContext()
+export async function inviteUserByEmail(email: string, roleId: string): Promise<ActionResult> {
+  const ctx = await getContext()
+  if (!ctx) return { ok: false, error: 'No autenticado' }
 
-  // Find user ID by email via SECURITY DEFINER function
-  const { data: targetUid, error: findError } = await supabase
+  const { data: targetUid, error: findError } = await ctx.supabase
     .rpc('find_user_by_email', { p_email: email })
 
-  if (findError) throw new Error(findError.message)
-  if (!targetUid) throw new Error('Usuario no encontrado. Debe registrarse primero en el sistema.')
+  if (findError) return { ok: false, error: findError.message }
+  if (!targetUid) return { ok: false, error: 'Usuario no encontrado. Debe registrarse primero en la plataforma.' }
 
-  const { error } = await supabase.rpc('add_company_member', {
-    p_caller_id:  userId,
-    p_company_id: companyId,
+  const { error } = await ctx.supabase.rpc('add_company_member', {
+    p_caller_id:  ctx.userId,
+    p_company_id: ctx.companyId,
     p_target_uid: targetUid,
     p_role_id:    roleId,
   })
-  if (error) throw new Error(error.message)
+  if (error) return { ok: false, error: error.message }
   revalidatePath('/sistema/usuarios')
+  return { ok: true }
 }

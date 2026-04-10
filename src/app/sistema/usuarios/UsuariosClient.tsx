@@ -37,22 +37,16 @@ export function UsuariosClient({ members, roles, currentUserId }: Props) {
 
   function handleRoleChange(membershipId: string, roleId: string) {
     startTransition(async () => {
-      try {
-        await changeUserRole(membershipId, roleId)
-      } catch (e: any) {
-        alert(e.message)
-      }
+      const res = await changeUserRole(membershipId, roleId)
+      if (!res.ok) alert(res.error)
     })
   }
 
   function handleStatusToggle(membershipId: string, currentStatus: string) {
     const newStatus = currentStatus === 'active' ? 'suspended' : 'active'
     startTransition(async () => {
-      try {
-        await changeUserStatus(membershipId, newStatus as 'active' | 'suspended')
-      } catch (e: any) {
-        alert(e.message)
-      }
+      const res = await changeUserStatus(membershipId, newStatus as 'active' | 'suspended')
+      if (!res.ok) alert(res.error)
     })
   }
 
@@ -61,13 +55,13 @@ export function UsuariosClient({ members, roles, currentUserId }: Props) {
     setInviteError('')
     setInviteSuccess(false)
     startTransition(async () => {
-      try {
-        await inviteUserByEmail(inviteEmail, inviteRole)
+      const res = await inviteUserByEmail(inviteEmail, inviteRole)
+      if (!res.ok) {
+        setInviteError(res.error)
+      } else {
         setInviteEmail('')
         setInviteSuccess(true)
         setShowInvite(false)
-      } catch (e: any) {
-        setInviteError(e.message)
       }
     })
   }

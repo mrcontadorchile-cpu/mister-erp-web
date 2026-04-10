@@ -45,12 +45,12 @@ export function RolesClient({ roles: initialRoles }: Props) {
   function handleSaveEdit(roleId: string) {
     setError('')
     startTransition(async () => {
-      try {
-        await updateRolePermissions(roleId, editPerms)
+      const res = await updateRolePermissions(roleId, editPerms)
+      if (!res.ok) {
+        setError(res.error)
+      } else {
         setRoles(prev => prev.map(r => r.id === roleId ? { ...r, permissions: editPerms } : r))
         setEditing(null)
-      } catch (e: any) {
-        setError(e.message)
       }
     })
   }
@@ -58,11 +58,11 @@ export function RolesClient({ roles: initialRoles }: Props) {
   function handleDelete(roleId: string) {
     if (!confirm('¿Eliminar este rol?')) return
     startTransition(async () => {
-      try {
-        await deleteRole(roleId)
+      const res = await deleteRole(roleId)
+      if (!res.ok) {
+        alert(res.error)
+      } else {
         setRoles(prev => prev.filter(r => r.id !== roleId))
-      } catch (e: any) {
-        alert(e.message)
       }
     })
   }
@@ -71,15 +71,14 @@ export function RolesClient({ roles: initialRoles }: Props) {
     e.preventDefault()
     setError('')
     startTransition(async () => {
-      try {
-        await createRole(newName, newDesc, newPerms)
+      const res = await createRole(newName, newDesc, newPerms)
+      if (!res.ok) {
+        setError(res.error)
+      } else {
         setShowCreate(false)
         setNewName('')
         setNewDesc('')
         setNewPerms([])
-        // Refresh is handled by revalidatePath, but we show optimistic update
-      } catch (e: any) {
-        setError(e.message)
       }
     })
   }
