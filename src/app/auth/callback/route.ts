@@ -28,13 +28,13 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error && data.user) {
-      // Ensure user_profiles row exists
+      // Ensure user_profiles row exists (role must satisfy Inventory check constraint)
       await supabase.from('user_profiles').upsert({
         id:         data.user.id,
         full_name:  data.user.user_metadata?.full_name
                     ?? data.user.email?.split('@')[0]
                     ?? 'Usuario',
-        role:       'user',
+        role:       'admin',
         company_id: null,
       }, { onConflict: 'id', ignoreDuplicates: true })
 

@@ -89,6 +89,59 @@ export async function inviteUserByEmail(email: string, roleId: string): Promise<
       p_role_id:    roleId,
     })
     if (error) return { ok: false, error: error.message }
+
+    // Send notification email so they know they've been added
+    const resend = new Resend(process.env.RESEND_API_KEY)
+    const loginUrl = `${appUrl}/login`
+    await resend.emails.send({
+      from:    'Mister Contabilidad <no-reply@mistercontador.cl>',
+      to:      trimmedEmail,
+      subject: `Acceso a ${companyName} — Mister Contabilidad ERP`,
+      html: `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:Arial,sans-serif;">
+  <div style="max-width:520px;margin:40px auto;background:#111;border-radius:12px;overflow:hidden;border:1px solid #222;">
+    <div style="background:#161616;padding:24px 32px;border-bottom:1px solid #222;">
+      <div style="display:inline-block;width:40px;height:40px;background:#d4a017;border-radius:10px;text-align:center;line-height:40px;vertical-align:middle;">
+        <span style="color:#000;font-weight:900;font-size:14px;">MC</span>
+      </div>
+      <div style="display:inline-block;vertical-align:middle;margin-left:10px;">
+        <p style="margin:0;font-size:15px;font-weight:700;color:#fff;">Mister Contabilidad</p>
+        <p style="margin:0;font-size:12px;color:#888;">ERP Contable Chile</p>
+      </div>
+    </div>
+    <div style="padding:32px;">
+      <h2 style="font-size:20px;font-weight:700;color:#fff;margin:0 0 12px;">
+        Tienes acceso a una nueva empresa
+      </h2>
+      <p style="font-size:14px;color:#aaa;line-height:1.7;margin:0 0 8px;">
+        Se te ha dado acceso al sistema de contabilidad de
+      </p>
+      <p style="font-size:16px;font-weight:700;color:#d4a017;margin:0 0 24px;">${companyName}</p>
+      <p style="font-size:14px;color:#aaa;line-height:1.7;margin:0 0 24px;">
+        Ingresa con tu cuenta existente usando el botón de abajo.
+      </p>
+      <div style="text-align:center;margin-bottom:28px;">
+        <a href="${loginUrl}"
+           style="display:inline-block;background:#d4a017;color:#000;font-weight:700;font-size:15px;padding:14px 36px;border-radius:8px;text-decoration:none;">
+          Ir al ERP →
+        </a>
+      </div>
+    </div>
+    <div style="background:#0d0d0d;padding:16px 32px;border-top:1px solid #1e1e1e;text-align:center;">
+      <p style="font-size:11px;color:#555;margin:0;">
+        Mister Group · ERP Contable Chile<br>
+        <a href="https://erp.mistercontador.cl" style="color:#666;text-decoration:none;">erp.mistercontador.cl</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+      `,
+    })
+
     revalidatePath('/sistema/usuarios')
     return { ok: true }
   }
@@ -109,11 +162,11 @@ export async function inviteUserByEmail(email: string, roleId: string): Promise<
 
   const invitedUserId = linkData.user.id
 
-  // Pre-create user_profiles row
+  // Pre-create user_profiles row (role must match Inventory check constraint)
   await admin.from('user_profiles').upsert({
     id:         invitedUserId,
     full_name:  trimmedEmail.split('@')[0],
-    role:       'user',
+    role:       'admin',
     company_id: null,
   }, { onConflict: 'id', ignoreDuplicates: true })
 
