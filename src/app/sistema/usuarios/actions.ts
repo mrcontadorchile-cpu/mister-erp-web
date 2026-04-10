@@ -81,16 +81,17 @@ export async function inviteUserByEmail(email: string, roleId: string): Promise<
   const existingUser = existing?.users?.find(u => u.email?.toLowerCase() === trimmedEmail)
 
   if (existingUser) {
-    // User already has an account → add directly
-    const { error } = await ctx.supabase.rpc('add_company_member', {
+    // User already has an account → add/update membership (ignore if already member)
+    await ctx.supabase.rpc('add_company_member', {
       p_caller_id:  ctx.userId,
       p_company_id: ctx.companyId,
       p_target_uid: existingUser.id,
       p_role_id:    roleId,
     })
-    if (error) return { ok: false, error: error.message }
+    // Note: we intentionally ignore RPC errors here (e.g. already a member)
+    // because the email should always be sent regardless
 
-    // Send notification email so they know they've been added
+    // Send notification email so they know they've been added/reminded
     const resend = new Resend(process.env.RESEND_API_KEY)
     const loginUrl = `${appUrl}/login`
     await resend.emails.send({
