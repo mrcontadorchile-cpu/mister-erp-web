@@ -9,8 +9,9 @@ export async function createAccount(data: {
   type: string
   nature: string
   parent_id: string | null
-  allows_entry: boolean
+  allows_entry:         boolean
   cost_center_required: boolean
+  has_auxiliary:        boolean
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -32,13 +33,14 @@ export async function createAccount(data: {
     nature: data.nature,
     parent_id: data.parent_id || null,
     level,
-    allows_entry: data.allows_entry,
+    allows_entry:         data.allows_entry,
     cost_center_required: data.cost_center_required,
+    has_auxiliary:        data.has_auxiliary,
     active: true,
   })
 
   if (error) return { error: error.message }
-  revalidatePath('/plan-cuentas')
+  revalidatePath('/contabilidad/plan-cuentas')
   return { success: true }
 }
 
@@ -47,21 +49,23 @@ export async function updateAccount(id: string, data: {
   name: string
   type: string
   nature: string
-  allows_entry: boolean
+  allows_entry:         boolean
   cost_center_required: boolean
+  has_auxiliary:        boolean
 }) {
   const supabase = await createClient()
   const { error } = await supabase.schema('conta').from('accounts').update({
-    code: data.code,
-    name: data.name,
-    type: data.type,
-    nature: data.nature,
-    allows_entry: data.allows_entry,
+    code:                 data.code,
+    name:                 data.name,
+    type:                 data.type,
+    nature:               data.nature,
+    allows_entry:         data.allows_entry,
     cost_center_required: data.cost_center_required,
+    has_auxiliary:        data.has_auxiliary,
   }).eq('id', id)
 
   if (error) return { error: error.message }
-  revalidatePath('/plan-cuentas')
+  revalidatePath('/contabilidad/plan-cuentas')
   return { success: true }
 }
 
@@ -70,6 +74,6 @@ export async function toggleAccount(id: string, active: boolean) {
   const { error } = await supabase.schema('conta').from('accounts')
     .update({ active }).eq('id', id)
   if (error) return { error: error.message }
-  revalidatePath('/plan-cuentas')
+  revalidatePath('/contabilidad/plan-cuentas')
   return { success: true }
 }

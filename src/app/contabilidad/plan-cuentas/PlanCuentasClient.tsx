@@ -16,13 +16,22 @@ interface FormState {
   type: AccountType
   nature: 'DEUDOR' | 'ACREEDOR'
   parent_id: string
-  allows_entry: boolean
+  allows_entry:         boolean
   cost_center_required: boolean
+  has_auxiliary:        boolean
+}
+
+const DEFAULTS_BY_TYPE: Record<AccountType, { cc: boolean; aux: boolean }> = {
+  ACTIVO:     { cc: false, aux: true  },
+  PASIVO:     { cc: false, aux: true  },
+  INGRESO:    { cc: true,  aux: false },
+  EGRESO:     { cc: true,  aux: false },
+  PATRIMONIO: { cc: false, aux: false },
 }
 
 const EMPTY_FORM: FormState = {
   code: '', name: '', type: 'ACTIVO', nature: 'DEUDOR',
-  parent_id: '', allows_entry: true, cost_center_required: false,
+  parent_id: '', allows_entry: true, cost_center_required: false, has_auxiliary: true,
 }
 
 const NATURE_BY_TYPE: Record<AccountType, 'DEUDOR' | 'ACREEDOR'> = {
@@ -57,20 +66,28 @@ export function PlanCuentasClient({ accounts }: Props) {
   const openEdit = (acc: Account) => {
     setEditId(acc.id)
     setForm({
-      code: acc.code,
-      name: acc.name,
-      type: acc.type,
-      nature: acc.nature,
-      parent_id: acc.parent_id ?? '',
-      allows_entry: acc.allows_entry,
+      code:                 acc.code,
+      name:                 acc.name,
+      type:                 acc.type,
+      nature:               acc.nature,
+      parent_id:            acc.parent_id ?? '',
+      allows_entry:         acc.allows_entry,
       cost_center_required: acc.cost_center_required,
+      has_auxiliary:        (acc as any).has_auxiliary ?? false,
     })
     setError('')
     setModalOpen(true)
   }
 
   const handleTypeChange = (type: AccountType) => {
-    setForm(f => ({ ...f, type, nature: NATURE_BY_TYPE[type] }))
+    const d = DEFAULTS_BY_TYPE[type]
+    setForm(f => ({
+      ...f,
+      type,
+      nature:               NATURE_BY_TYPE[type],
+      cost_center_required: d.cc,
+      has_auxiliary:        d.aux,
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -149,9 +166,11 @@ export function PlanCuentasClient({ accounts }: Props) {
               <th className="px-4 py-3 text-center w-28">Tipo</th>
               <th className="px-4 py-3 text-center w-20">Nivel</th>
               <th className="px-4 py-3 text-center w-24">Naturaleza</th>
-              <th className="px-4 py-3 text-center w-24">Mov.</th>
+              <th className="px-4 py-3 text-center w-20">Mov.</th>
+              <th className="px-4 py-3 text-center w-20" title="Centro de Costo">CC</th>
+              <th className="px-4 py-3 text-center w-20" title="Auxiliar">Aux.</th>
               <th className="px-4 py-3 text-center w-20">Estado</th>
-              <th className="px-4 py-3 text-center w-24">Acciones</th>
+              <th className="px-4 py-3 text-center w-16">Edit.</th>
             </tr>
           </thead>
           <tbody>
@@ -185,13 +204,27 @@ export function PlanCuentasClient({ accounts }: Props) {
                   </td>
                   <td className="px-4 py-2.5 text-center">
                     {acc.allows_entry
-                      ? <span className="badge bg-success/10 text-success">Sí</span>
-                      : <span className="badge bg-surface-high text-text-disabled">No</span>}
+                      ? <span className="badge bg-success/10 text-success text-[10px]">Sí</span>
+                      : <span className="badge bg-surface-high text-text-disabled text-[10px]">No</span>}
+                  </td>
+                  <td className="px-4 py-2.5 text-center">
+                    {acc.allows_entry
+                      ? acc.cost_center_required
+                        ? <span className="badge bg-primary/10 text-primary text-[10px]">Sí</span>
+                        : <span className="badge bg-surface-high text-text-disabled text-[10px]">No</span>
+                      : <span className="text-text-disabled text-[10px]">—</span>}
+                  </td>
+                  <td className="px-4 py-2.5 text-center">
+                    {acc.allows_entry
+                      ? (acc as any).has_auxiliary
+                        ? <span className="badge bg-warning/10 text-warning text-[10px]">Sí</span>
+                        : <span className="badge bg-surface-high text-text-disabled text-[10px]">No</span>
+                      : <span className="text-text-disabled text-[10px]">—</span>}
                   </td>
                   <td className="px-4 py-2.5 text-center">
                     <button
                       onClick={() => handleToggle(acc.id, acc.active)}
-                      className={`badge cursor-pointer transition-colors ${acc.active ? 'bg-success/10 text-success hover:bg-success/20' : 'bg-surface-high text-text-disabled hover:bg-error/10 hover:text-error'}`}
+                      className={`badge cursor-pointer transition-colors text-[10px] ${acc.active ? 'bg-success/10 text-success hover:bg-success/20' : 'bg-surface-high text-text-disabled hover:bg-error/10 hover:text-error'}`}
                     >
                       {acc.active ? 'Activa' : 'Inactiva'}
                     </button>
@@ -213,7 +246,7 @@ export function PlanCuentasClient({ accounts }: Props) {
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-text-disabled">
+                <td colSpan={10} className="px-4 py-8 text-center text-text-disabled">
                   No se encontraron cuentas
                 </td>
               </tr>
@@ -295,24 +328,43 @@ export function PlanCuentasClient({ accounts }: Props) {
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
+          <div className="border border-border rounded-lg p-3 space-y-2.5">
+            <p className="text-xs text-text-disabled font-medium mb-1">Controles de la cuenta</p>
+            <label className="flex items-center gap-2.5 cursor-pointer">
               <input
                 type="checkbox"
                 checked={form.allows_entry}
                 onChange={e => setForm(f => ({ ...f, allows_entry: e.target.checked }))}
                 className="w-3.5 h-3.5 accent-primary"
               />
-              <span className="text-sm text-text-secondary">Permite movimientos</span>
+              <div>
+                <span className="text-sm text-text-secondary">Permite movimientos</span>
+                <p className="text-[10px] text-text-disabled">La cuenta acepta líneas en asientos contables</p>
+              </div>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2.5 cursor-pointer">
               <input
                 type="checkbox"
                 checked={form.cost_center_required}
                 onChange={e => setForm(f => ({ ...f, cost_center_required: e.target.checked }))}
                 className="w-3.5 h-3.5 accent-primary"
               />
-              <span className="text-sm text-text-secondary">Requiere C. Costo</span>
+              <div>
+                <span className="text-sm text-text-secondary">Requiere Centro de Costo</span>
+                <p className="text-[10px] text-text-disabled">Por defecto: Sí en cuentas de resultado (INGRESO/EGRESO)</p>
+              </div>
+            </label>
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.has_auxiliary}
+                onChange={e => setForm(f => ({ ...f, has_auxiliary: e.target.checked }))}
+                className="w-3.5 h-3.5 accent-primary"
+              />
+              <div>
+                <span className="text-sm text-text-secondary">Lleva Auxiliar</span>
+                <p className="text-[10px] text-text-disabled">Por defecto: Sí en Activo/Pasivo. No en Caja/Bancos ni cuentas de resultado</p>
+              </div>
             </label>
           </div>
 

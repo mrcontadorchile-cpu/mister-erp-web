@@ -17,7 +17,7 @@ export async function createCostCenter(data: { code: string; name: string }) {
   })
 
   if (error) return { error: error.message }
-  revalidatePath('/centros-costo')
+  revalidatePath('/contabilidad/centros-costo')
   return { success: true }
 }
 
@@ -28,7 +28,7 @@ export async function updateCostCenter(id: string, data: { code: string; name: s
     .eq('id', id)
 
   if (error) return { error: error.message }
-  revalidatePath('/centros-costo')
+  revalidatePath('/contabilidad/centros-costo')
   return { success: true }
 }
 
@@ -38,6 +38,6 @@ export async function toggleCostCenter(id: string, active: boolean) {
     .update({ active }).eq('id', id)
 
   if (error) return { error: error.message }
-  revalidatePath('/centros-costo')
+  revalidatePath('/contabilidad/centros-costo')
   return { success: true }
 }

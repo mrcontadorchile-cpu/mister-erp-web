@@ -17,7 +17,7 @@ export async function openPeriod(year: number, month: number) {
   })
 
   if (error) return { error: error.message }
-  revalidatePath('/periodos')
+  revalidatePath('/contabilidad/periodos')
   return { success: true }
 }
 
@@ -32,7 +32,7 @@ export async function closePeriod(id: string) {
   }).eq('id', id)
 
   if (error) return { error: error.message }
-  revalidatePath('/periodos')
+  revalidatePath('/contabilidad/periodos')
   return { success: true }
 }
 
@@ -45,6 +45,6 @@ export async function reopenPeriod(id: string) {
   }).eq('id', id)
 
   if (error) return { error: error.message }
-  revalidatePath('/periodos')
+  revalidatePath('/contabilidad/periodos')
   return { success: true }
 }

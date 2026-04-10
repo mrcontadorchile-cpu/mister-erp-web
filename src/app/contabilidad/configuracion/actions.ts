@@ -119,7 +119,7 @@ export async function updateCompany(data: {
     .eq('id', profile!.company_id)
 
   if (error) return { error: error.message }
-  revalidatePath('/configuracion')
+  revalidatePath('/contabilidad/configuracion')
   return { success: true }
 }
 
@@ -153,7 +153,7 @@ export async function saveSiiConfig(data: {
     .upsert(updateData, { onConflict: 'company_id' })
 
   if (error) return { error: error.message }
-  revalidatePath('/configuracion')
+  revalidatePath('/contabilidad/configuracion')
   return { success: true }
 }
 
@@ -184,7 +184,7 @@ export async function saveSiiCertificate(data: {
     }, { onConflict: 'company_id' })
 
   if (error) return { error: error.message }
-  revalidatePath('/configuracion')
+  revalidatePath('/contabilidad/configuracion')
   return { success: true }
 }
 
@@ -209,7 +209,7 @@ export async function connectSii(data: { rut: string; password: string }) {
       last_sync_message: 'Conexión exitosa con el SII',
     }, { onConflict: 'company_id' })
 
-    revalidatePath('/configuracion')
+    revalidatePath('/contabilidad/configuracion')
     return { success: true }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error desconocido'
@@ -218,7 +218,7 @@ export async function connectSii(data: { rut: string; password: string }) {
       last_sync_status: 'error',
       last_sync_message: msg,
     }).eq('company_id', companyId)
-    revalidatePath('/configuracion')
+    revalidatePath('/contabilidad/configuracion')
     return { error: msg }
   }
 }
@@ -243,7 +243,7 @@ export async function saveManualToken(token: string) {
   }, { onConflict: 'company_id' })
 
   if (error) return { error: error.message }
-  revalidatePath('/configuracion')
+  revalidatePath('/contabilidad/configuracion')
   return { success: true }
 }
 
@@ -258,7 +258,7 @@ export async function clearSiiToken() {
     .update({ sii_token: null, sii_token_obtained_at: null })
     .eq('company_id', profile!.company_id)
 
-  revalidatePath('/configuracion')
+  revalidatePath('/contabilidad/configuracion')
   return { success: true }
 }
 
@@ -290,10 +290,10 @@ export async function testSiiConnection() {
         last_sync_status: 'error',
         last_sync_message: data.error,
       }).eq('company_id', profile!.company_id)
-      revalidatePath('/configuracion')
+      revalidatePath('/contabilidad/configuracion')
       return { error: data.error }
     }
-    revalidatePath('/configuracion')
+    revalidatePath('/contabilidad/configuracion')
     return { success: true }
   }
 
