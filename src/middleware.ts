@@ -27,15 +27,18 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/login')
-  const isPublicRoute = request.nextUrl.pathname === '/'
+  const path = request.nextUrl.pathname
 
-  if (!user && !isAuthRoute) {
+  // Routes that don't require authentication
+  const isAuthPage = path.startsWith('/login') || path.startsWith('/auth/')
+
+  if (!user && !isAuthPage) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (user && isAuthRoute) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  // Only redirect away from login (not other /auth/* pages which may need the session)
+  if (user && path.startsWith('/login')) {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return supabaseResponse
