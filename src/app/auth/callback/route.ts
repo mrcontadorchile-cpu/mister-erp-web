@@ -67,12 +67,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(`${origin}/auth/nueva-contrasena`)
       }
 
-      // For invite flow: check if user has no password set (new user)
-      const hasPassword = data.user.user_metadata?.has_password !== false
-      const isNewInvite = !hasPassword || data.user.app_metadata?.provider === 'email' && !data.user.last_sign_in_at
-
-      // If it looks like a first-time invite, send to password setup
-      if (!data.user.last_sign_in_at || type === 'invite') {
+      if (type === 'invite') {
         return NextResponse.redirect(`${origin}/auth/configurar-cuenta`)
       }
 

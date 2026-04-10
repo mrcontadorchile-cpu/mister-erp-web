@@ -152,7 +152,7 @@ export async function inviteUserByEmail(email: string, roleId: string): Promise<
     type: 'invite',
     email: trimmedEmail,
     options: {
-      redirectTo: `${appUrl}/auth/callback?next=/`,
+      redirectTo: `${appUrl}/auth/callback?type=invite`,
     },
   })
 
