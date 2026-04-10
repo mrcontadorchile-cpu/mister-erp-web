@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import { LogoutAction } from './_components/LogoutAction'
+import { HomeHeader } from './_components/HomeHeader'
+import { hasAnyPermission, PERMISSIONS } from '@/lib/permissions'
 
 const modules = [
   {
@@ -41,34 +42,37 @@ export default async function HomePage() {
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('full_name, companies(name, rut)')
+    .select('full_name, company_id, companies(id, name, rut)')
     .eq('id', user.id)
     .single()
 
-  const company = profile?.companies as unknown as { name: string; rut: string } | null
+  const activeCompany = profile?.companies as unknown as { id: string; name: string; rut: string } | null
+  const companyId = profile?.company_id as string
+
+  // Load permissions and all companies via SECURITY DEFINER functions
+  const { data: permData } = await supabase
+    .rpc('get_user_permissions', { p_user_id: user.id, p_company_id: companyId })
+
+  const { data: companiesData } = await supabase
+    .rpc('get_user_companies', { p_user_id: user.id })
+
+  const permissions: string[] = (permData as string[] | null) ?? ['*']
+  const allCompanies = (companiesData as { id: string; name: string; rut: string }[] | null)
+    ?? (activeCompany ? [activeCompany] : [])
+
+  const canAccessSistema = hasAnyPermission(permissions, [
+    PERMISSIONS.SISTEMA_USUARIOS,
+    PERMISSIONS.SISTEMA_ROLES,
+  ])
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border bg-surface">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
-              <span className="text-primary-foreground font-black text-sm">MC</span>
-            </div>
-            <div>
-              <p className="text-sm font-bold text-text-primary">Mister Contabilidad</p>
-              {company && (
-                <p className="text-xs text-text-disabled">{company.name} · {company.rut}</p>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-text-disabled">{profile?.full_name}</span>
-            <LogoutAction />
-          </div>
-        </div>
-      </header>
+      <HomeHeader
+        fullName={profile?.full_name ?? ''}
+        activeCompany={activeCompany}
+        allCompanies={allCompanies}
+        canAccessSistema={canAccessSistema}
+      />
 
       {/* Main */}
       <main className="flex-1 max-w-5xl mx-auto px-6 py-12 w-full">
