@@ -16,15 +16,11 @@ async function getAdminContext() {
     .single()
   if (!profile?.company_id) throw new Error('Sin empresa activa')
 
-  const { data: membership } = await supabase
-    .from('user_company_memberships')
-    .select('erp_roles(permissions)')
-    .eq('user_id', user.id)
-    .eq('company_id', profile.company_id)
-    .eq('status', 'active')
-    .single()
+  // Use SECURITY DEFINER function to avoid RLS circular dependency
+  const { data: permData } = await supabase
+    .rpc('get_user_permissions', { p_user_id: user.id, p_company_id: profile.company_id })
 
-  const perms: string[] = (membership?.erp_roles as unknown as { permissions: string[] } | null)?.permissions ?? []
+  const perms: string[] = (permData as string[] | null) ?? []
   if (!hasPermission(perms, PERMISSIONS.SISTEMA_ROLES)) throw new Error('Sin permiso')
 
   return { supabase, companyId: profile.company_id }

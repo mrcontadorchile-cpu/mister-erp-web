@@ -13,31 +13,32 @@ export default async function RolesPage() {
 
   const companyId = profile?.company_id as string
 
-  const { data: roles } = await supabase
-    .from('erp_roles')
-    .select('id, name, description, permissions, is_system, created_at')
-    .eq('company_id', companyId)
-    .order('is_system', { ascending: false })
-    .order('name')
+  // Use SECURITY DEFINER functions to avoid RLS circular dependency
+  const { data: rolesRaw } = await supabase
+    .rpc('get_company_roles', { p_company_id: companyId })
 
-  // Count members per role
-  const { data: counts } = await supabase
-    .from('user_company_memberships')
-    .select('role_id')
-    .eq('company_id', companyId)
-    .eq('status', 'active')
+  const { data: membersRaw } = await supabase
+    .rpc('get_company_members', { p_company_id: companyId })
 
+  // Count active members per role
   const memberCounts: Record<string, number> = {}
-  for (const c of counts ?? []) {
-    memberCounts[c.role_id] = (memberCounts[c.role_id] ?? 0) + 1
+  for (const m of (membersRaw ?? []) as { role_id: string; status: string }[]) {
+    if (m.status === 'active') {
+      memberCounts[m.role_id] = (memberCounts[m.role_id] ?? 0) + 1
+    }
   }
 
-  const roleList = (roles ?? []).map(r => ({
-    id: r.id as string,
-    name: r.name as string,
-    description: r.description as string | null,
-    permissions: r.permissions as string[],
-    is_system: r.is_system as boolean,
+  type RoleRow = {
+    id: string; name: string; description: string | null
+    permissions: string[]; is_system: boolean
+  }
+
+  const roleList = ((rolesRaw ?? []) as RoleRow[]).map(r => ({
+    id: r.id,
+    name: r.name,
+    description: r.description,
+    permissions: r.permissions,
+    is_system: r.is_system,
     member_count: memberCounts[r.id] ?? 0,
   }))
 

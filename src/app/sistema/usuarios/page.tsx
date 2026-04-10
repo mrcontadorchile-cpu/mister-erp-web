@@ -13,44 +13,36 @@ export default async function UsuariosPage() {
 
   const companyId = profile?.company_id as string
 
-  // Load all memberships for this company with user + role info
-  const { data: memberships } = await supabase
-    .from('user_company_memberships')
-    .select(`
-      id, user_id, status, created_at,
-      erp_roles(id, name, permissions),
-      user_profiles(full_name, role)
-    `)
-    .eq('company_id', companyId)
-    .order('created_at')
+  // Use SECURITY DEFINER functions to avoid RLS circular dependency
+  const { data: membersRaw } = await supabase
+    .rpc('get_company_members', { p_company_id: companyId })
 
-  // Load all roles for role-change dropdown
-  const { data: roles } = await supabase
-    .from('erp_roles')
-    .select('id, name, is_system, permissions')
-    .eq('company_id', companyId)
-    .order('name')
+  const { data: rolesRaw } = await supabase
+    .rpc('get_company_roles', { p_company_id: companyId })
 
-  // Get auth emails via RPC (we'll use full_name as fallback since we can't get emails directly)
-  const members = (memberships ?? []).map(m => ({
-    id: m.id as string,
-    user_id: m.user_id as string,
-    status: m.status as string,
-    created_at: m.created_at as string,
-    full_name: (m.user_profiles as any)?.full_name ?? '—',
-    system_role: (m.user_profiles as any)?.role ?? '—',
-    role_id: (m.erp_roles as any)?.id ?? '',
-    role_name: (m.erp_roles as any)?.name ?? '—',
-    is_admin: ((m.erp_roles as any)?.permissions ?? []).includes('*'),
+  type MemberRow = {
+    membership_id: string; user_id: string; status: string; created_at: string
+    full_name: string; role_id: string; role_name: string; role_perms: string[]
+  }
+
+  const members = ((membersRaw ?? []) as MemberRow[]).map(m => ({
+    id: m.membership_id,
+    user_id: m.user_id,
+    status: m.status,
+    created_at: m.created_at,
+    full_name: m.full_name ?? '—',
+    system_role: '',
+    role_id: m.role_id,
+    role_name: m.role_name,
+    is_admin: (m.role_perms ?? []).includes('*'),
   }))
 
-  const roleList = (roles ?? []).map(r => ({
-    id: r.id as string,
-    name: r.name as string,
-    is_system: r.is_system as boolean,
+  type RoleRow = { id: string; name: string; is_system: boolean }
+  const roleList = ((rolesRaw ?? []) as RoleRow[]).map(r => ({
+    id: r.id,
+    name: r.name,
+    is_system: r.is_system,
   }))
-
-  const currentUserId = user!.id
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -63,7 +55,7 @@ export default async function UsuariosPage() {
       <UsuariosClient
         members={members}
         roles={roleList}
-        currentUserId={currentUserId}
+        currentUserId={user!.id}
       />
     </div>
   )
