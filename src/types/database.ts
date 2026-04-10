@@ -121,4 +121,8 @@ export interface UserProfile {
   company_id: string
   company_name: string
   company_rut: string
+  /** Resolved permissions for the active company (from erp_roles) */
+  permissions: string[]
+  /** All companies this user belongs to */
+  companies: { id: string; name: string; rut: string }[]
 }

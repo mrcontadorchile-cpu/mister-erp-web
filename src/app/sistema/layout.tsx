@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { DashboardShell } from './shell'
+import { hasAnyPermission, PERMISSIONS } from '@/lib/permissions'
+import { SistemaShell } from './shell'
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function SistemaLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -23,12 +23,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: permData } = await supabase
     .rpc('get_user_permissions', { p_user_id: user.id, p_company_id: companyId })
 
-  // Load all companies via SECURITY DEFINER function
-  const { data: companiesData } = await supabase
-    .rpc('get_user_companies', { p_user_id: user.id })
-
   const permissions: string[] = (permData as string[] | null) ?? ['*']
-  const allCompanies = (companiesData as { id: string; name: string; rut: string }[] | null) ?? (activeCompany ? [activeCompany] : [])
+
+  if (!hasAnyPermission(permissions, [PERMISSIONS.SISTEMA_USUARIOS, PERMISSIONS.SISTEMA_ROLES])) {
+    redirect('/contabilidad/dashboard')
+  }
 
   const userProfile = {
     id: user.id,
@@ -38,8 +37,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     company_name: activeCompany?.name ?? '',
     company_rut: activeCompany?.rut ?? '',
     permissions,
-    companies: allCompanies,
+    companies: [],
   }
 
-  return <DashboardShell profile={userProfile}>{children}</DashboardShell>
+  return <SistemaShell profile={userProfile}>{children}</SistemaShell>
 }

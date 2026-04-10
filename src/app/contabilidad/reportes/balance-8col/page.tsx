@@ -20,10 +20,10 @@ export default async function Balance8ColPage({
 
   const [prevRes, movRes, currRes] = await Promise.all([
     month > 1
-      ? supabase.rpc('conta.get_account_balances', { p_company_id: companyId, p_year: year, p_month_from: 1, p_month_to: month - 1 })
+      ? supabase.rpc('get_account_balances', { p_company_id: companyId, p_year: year, p_month_from: 1, p_month_to: month - 1 })
       : Promise.resolve({ data: [] }),
-    supabase.rpc('conta.get_account_balances', { p_company_id: companyId, p_year: year, p_month_from: month, p_month_to: month }),
-    supabase.rpc('conta.get_account_balances', { p_company_id: companyId, p_year: year, p_month_from: 1, p_month_to: month }),
+    supabase.rpc('get_account_balances', { p_company_id: companyId, p_year: year, p_month_from: month, p_month_to: month }),
+    supabase.rpc('get_account_balances', { p_company_id: companyId, p_year: year, p_month_from: 1, p_month_to: month }),
   ])
 
   const prevMap = new Map(((prevRes.data ?? []) as AccountBalance[]).map(b => [b.code, b]))

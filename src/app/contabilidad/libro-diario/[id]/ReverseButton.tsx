@@ -14,7 +14,7 @@ export function ReverseButton({ entryId }: { entryId: string }) {
     startTransition(async () => {
       const r = await reverseJournalEntry(entryId)
       if (r.error) { setError(r.error); return }
-      router.push('/libro-diario')
+      router.push('/contabilidad/libro-diario')
     })
   }
 
