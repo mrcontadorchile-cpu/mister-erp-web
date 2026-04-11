@@ -200,6 +200,10 @@ export default function LoginPage() {
           <Link href="/politica-de-privacidad" className="hover:text-text-secondary transition-colors">
             Política de privacidad
           </Link>
+          {' · '}
+          <Link href="/terminos-de-servicio" className="hover:text-text-secondary transition-colors">
+            Términos de servicio
+          </Link>
         </p>
       </div>
     </div>
