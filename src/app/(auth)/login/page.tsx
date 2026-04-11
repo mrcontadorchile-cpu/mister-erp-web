@@ -196,7 +196,10 @@ export default function LoginPage() {
         </Suspense>
 
         <p className="text-center text-text-disabled text-xs mt-10">
-          Mister Group © {new Date().getFullYear()}
+          Mister Group © {new Date().getFullYear()} ·{' '}
+          <Link href="/politica-de-privacidad" className="hover:text-text-secondary transition-colors">
+            Política de privacidad
+          </Link>
         </p>
       </div>
     </div>

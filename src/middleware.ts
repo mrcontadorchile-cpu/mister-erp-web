@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
 
   // Routes that don't require authentication
-  const isAuthPage = path.startsWith('/login') || path.startsWith('/auth/')
+  const isAuthPage = path.startsWith('/login') || path.startsWith('/auth/') || path.startsWith('/politica-de-privacidad')
 
   if (!user && !isAuthPage) {
     return NextResponse.redirect(new URL('/login', request.url))
