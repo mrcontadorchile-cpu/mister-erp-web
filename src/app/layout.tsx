@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: 'Mister Contabilidad — ERP',
   description: 'Sistema de contabilidad chilena para Pymes — Mister Group',
   icons: { icon: '/favicon.ico' },
+  verification: {
+    google: 'gNDYv-waFbDNBLembf_ZYp5D-Cr9FU-cXDzUSD8JH1w',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
