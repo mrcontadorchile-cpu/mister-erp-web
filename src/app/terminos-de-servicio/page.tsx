@@ -2,8 +2,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Términos de Servicio — Mister Contabilidad ERP',
-  description: 'Términos y condiciones de uso de Mister Contabilidad ERP, plataforma SaaS de gestión contable para Pymes chilenas.',
+  title: 'Términos de Servicio — ERP Mister Group',
+  description: 'Términos y condiciones de uso de ERP Mister Group, plataforma SaaS de gestión contable para Pymes chilenas.',
 }
 
 export default function TerminosDeServicioPage() {
@@ -17,7 +17,7 @@ export default function TerminosDeServicioPage() {
             <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
               <span className="text-primary-foreground font-black text-sm">MC</span>
             </div>
-            <span className="font-semibold text-text-primary">Mister Contabilidad</span>
+            <span className="font-semibold text-text-primary">ERP Mister Group</span>
           </Link>
           <span className="text-xs text-text-disabled">ERP · Mister Group</span>
         </div>
@@ -40,7 +40,7 @@ export default function TerminosDeServicioPage() {
               Aceptación de los términos
             </h2>
             <p>
-              Al acceder y utilizar <strong className="text-text-primary">Mister Contabilidad ERP</strong> (en adelante, "el Servicio"),
+              Al acceder y utilizar <strong className="text-text-primary">ERP Mister Group</strong> (en adelante, "el Servicio"),
               operado por <strong className="text-text-primary">Mister Group</strong>, el usuario acepta íntegramente
               los presentes Términos de Servicio. Si no está de acuerdo con alguno de ellos, debe abstenerse de utilizar la plataforma.
             </p>
@@ -53,7 +53,7 @@ export default function TerminosDeServicioPage() {
               Descripción del servicio
             </h2>
             <p>
-              Mister Contabilidad ERP es una plataforma SaaS (Software as a Service) de gestión contable y financiera
+              ERP Mister Group es una plataforma SaaS (Software as a Service) de gestión contable y financiera
               orientada a Pymes chilenas. El Servicio incluye, entre otras funcionalidades:
             </p>
             <ul className="mt-3 space-y-2 ml-4">

@@ -52,7 +52,7 @@ export function HomeHeader({ fullName, activeCompany, allCompanies, canAccessSis
             <span className="text-primary-foreground font-black text-sm">MC</span>
           </div>
           <div>
-            <p className="text-sm font-bold text-text-primary">Mister Contabilidad</p>
+            <p className="text-sm font-bold text-text-primary">ERP Mister Group</p>
 
             {/* Company switcher / display */}
             {activeCompany && (

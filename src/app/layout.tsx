@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Mister Contabilidad — ERP',
+  title: 'ERP Mister Group',
   description: 'Sistema de contabilidad chilena para Pymes — Mister Group',
   icons: { icon: '/favicon.ico' },
   verification: {

@@ -187,7 +187,7 @@ export default function LoginPage() {
           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-4">
             <span className="text-primary-foreground font-black text-2xl tracking-tight">MC</span>
           </div>
-          <h1 className="text-xl font-bold text-text-primary">Mister Contabilidad</h1>
+          <h1 className="text-xl font-bold text-text-primary">ERP Mister Group</h1>
           <p className="text-text-secondary text-sm mt-1">Ingresa a tu cuenta</p>
         </div>
 

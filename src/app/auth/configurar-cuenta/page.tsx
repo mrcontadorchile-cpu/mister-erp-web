@@ -62,7 +62,7 @@ export default function ConfigurarCuentaPage() {
           </div>
           <h1 className="text-xl font-bold text-text-primary">Configura tu cuenta</h1>
           <p className="text-text-secondary text-sm mt-1 text-center">
-            Bienvenido a Mister Contabilidad ERP.<br/>Crea tu contraseña para comenzar.
+            Bienvenido a ERP Mister Group.<br/>Crea tu contraseña para comenzar.
           </p>
         </div>
 

@@ -133,7 +133,7 @@ function LandingPage() {
             <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
               <span className="text-primary-foreground font-black text-sm">MC</span>
             </div>
-            <span className="font-bold text-text-primary">Mister Contabilidad</span>
+            <span className="font-bold text-text-primary">ERP Mister Group</span>
           </div>
           <Link href="/login"
             className="bg-primary text-primary-foreground font-semibold text-sm px-5 py-2 rounded-xl hover:bg-primary/90 transition-colors">

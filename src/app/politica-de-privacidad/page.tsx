@@ -2,8 +2,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidad — Mister Contabilidad ERP',
-  description: 'Política de privacidad y tratamiento de datos personales de Mister Contabilidad ERP, conforme a la Ley 19.628 de Chile.',
+  title: 'Política de Privacidad — ERP Mister Group',
+  description: 'Política de privacidad y tratamiento de datos personales de ERP Mister Group, conforme a la Ley 19.628 de Chile.',
 }
 
 export default function PoliticaPrivacidadPage() {
@@ -17,7 +17,7 @@ export default function PoliticaPrivacidadPage() {
             <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
               <span className="text-primary-foreground font-black text-sm">MC</span>
             </div>
-            <span className="font-semibold text-text-primary">Mister Contabilidad</span>
+            <span className="font-semibold text-text-primary">ERP Mister Group</span>
           </Link>
           <span className="text-xs text-text-disabled">ERP · Mister Group</span>
         </div>
@@ -41,7 +41,7 @@ export default function PoliticaPrivacidadPage() {
             </h2>
             <p>
               El responsable del tratamiento de los datos personales es <strong className="text-text-primary">Mister Group</strong>,
-              titular de la plataforma <em>Mister Contabilidad ERP</em> (en adelante, "el ERP"),
+              titular de la plataforma <em>ERP Mister Group</em> (en adelante, "el ERP"),
               accesible en <strong className="text-text-primary">erp.mistercontador.cl</strong>.
             </p>
             <p className="mt-2">

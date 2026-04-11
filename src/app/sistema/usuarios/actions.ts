@@ -105,7 +105,7 @@ export async function inviteUserByEmail(email: string, roleId: string): Promise<
       await resend.emails.send({
         from:    'Mister Contabilidad <no-reply@mistercontador.cl>',
         to:      trimmed,
-        subject: `Invitación a ${companyName} — Mister Contabilidad ERP`,
+        subject: `Invitación a ${companyName} — ERP Mister Group`,
         html:    buildInviteEmail(companyName, setupUrl),
       })
     } else {
@@ -113,7 +113,7 @@ export async function inviteUserByEmail(email: string, roleId: string): Promise<
       await resend.emails.send({
         from:    'Mister Contabilidad <no-reply@mistercontador.cl>',
         to:      trimmed,
-        subject: `Acceso a ${companyName} — Mister Contabilidad ERP`,
+        subject: `Acceso a ${companyName} — ERP Mister Group`,
         html:    buildAccessEmail(companyName, `${appUrl}/login`),
       })
     }
@@ -154,7 +154,7 @@ export async function inviteUserByEmail(email: string, roleId: string): Promise<
   const { error: emailError } = await resend.emails.send({
     from:    'Mister Contabilidad <no-reply@mistercontador.cl>',
     to:      trimmed,
-    subject: `Invitación a ${companyName} — Mister Contabilidad ERP`,
+    subject: `Invitación a ${companyName} — ERP Mister Group`,
     html:    buildInviteEmail(companyName, inviteUrl),
   })
   if (emailError) return { ok: false, error: `Invitación creada pero error al enviar email: ${emailError.message}` }
@@ -176,7 +176,7 @@ function emailShell(body: string) {
         <span style="color:#000;font-weight:900;font-size:14px;">MC</span>
       </div>
       <div style="display:inline-block;vertical-align:middle;margin-left:10px;">
-        <p style="margin:0;font-size:15px;font-weight:700;color:#fff;">Mister Contabilidad</p>
+        <p style="margin:0;font-size:15px;font-weight:700;color:#fff;">ERP Mister Group</p>
         <p style="margin:0;font-size:12px;color:#888;">ERP Contable Chile</p>
       </div>
     </div>

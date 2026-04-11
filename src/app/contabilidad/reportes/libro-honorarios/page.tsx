@@ -251,7 +251,7 @@ export default async function LibroHonorariosPage({
         </table>
 
         <div style={{ marginTop: '20px', fontSize: '9px', color: '#666', textAlign: 'center', borderTop: '1px solid #ccc', paddingTop: '6px' }}>
-          Generado por Mister Contabilidad — {new Date().toLocaleDateString('es-CL')}
+          Generado por ERP Mister Group — {new Date().toLocaleDateString('es-CL')}
         </div>
       </div>
     </div>
