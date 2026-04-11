@@ -1,17 +1,26 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
-  const router = useRouter()
+  const router       = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState<string | null>(null)
   const [showPass, setShowPass] = useState(false)
+
+  // Show friendly message when arriving from an expired/invalid link
+  useEffect(() => {
+    const err = searchParams.get('error')
+    if (err === 'link_invalido') {
+      setError('El link de invitación expiró o ya fue usado. Pide al administrador que te envíe una nueva invitación.')
+    }
+  }, [searchParams])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
