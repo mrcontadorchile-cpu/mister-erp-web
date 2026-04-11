@@ -28,21 +28,30 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error && data.user) {
-      // Ensure user_profiles row exists (role must satisfy Inventory check constraint)
+      // Ensure user_profiles row exists
       await supabase.from('user_profiles').upsert({
         id:         data.user.id,
         full_name:  data.user.user_metadata?.full_name
+                    ?? data.user.user_metadata?.name
                     ?? data.user.email?.split('@')[0]
                     ?? 'Usuario',
         role:       'admin',
         company_id: null,
       }, { onConflict: 'id', ignoreDuplicates: true })
 
-      // Activate invited membership and set active company
+      // Activate any pending invited memberships
+      await supabase
+        .from('user_company_memberships')
+        .update({ status: 'active' })
+        .eq('user_id', data.user.id)
+        .eq('status', 'invited')
+
+      // Set company_id on profile if not set yet
       const { data: membership } = await supabase
         .from('user_company_memberships')
         .select('company_id')
         .eq('user_id', data.user.id)
+        .eq('status', 'active')
         .order('created_at')
         .limit(1)
         .single()
@@ -52,23 +61,21 @@ export async function GET(request: NextRequest) {
           .from('user_profiles')
           .update({ company_id: membership.company_id })
           .eq('id', data.user.id)
-          .is('company_id', null) // only set if not already set
-
-        await supabase
-          .from('user_company_memberships')
-          .update({ status: 'active' })
-          .eq('user_id', data.user.id)
-          .eq('company_id', membership.company_id)
-          .eq('status', 'invited')
+          .is('company_id', null)
       }
 
       // Redirect based on flow type
       if (type === 'recovery') {
         return NextResponse.redirect(`${origin}/auth/nueva-contrasena`)
       }
-
       if (type === 'invite') {
         return NextResponse.redirect(`${origin}/auth/configurar-cuenta`)
+      }
+
+      // Google OAuth or normal session: check they have access
+      if (!membership?.company_id) {
+        // No company membership → no access
+        return NextResponse.redirect(`${origin}/login?error=sin_acceso`)
       }
 
       return NextResponse.redirect(`${origin}${next}`)
