@@ -1,4 +1,3 @@
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { HomeHeader } from './_components/HomeHeader'
@@ -38,7 +37,7 @@ const modules = [
 export default async function HomePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  if (!user) return <LandingPage />
 
   const { data: profile } = await supabase
     .from('user_profiles')
@@ -118,6 +117,81 @@ export default async function HomePage() {
 
       <footer className="border-t border-border py-4 text-center">
         <p className="text-xs text-text-disabled">Mister Group · ERP Contable Chile</p>
+      </footer>
+    </div>
+  )
+}
+
+// ── Public landing page (shown when not logged in) ───────────────────────────
+function LandingPage() {
+  return (
+    <div className="min-h-screen bg-background text-text-primary flex flex-col">
+      {/* Nav */}
+      <header className="border-b border-border">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
+              <span className="text-primary-foreground font-black text-sm">MC</span>
+            </div>
+            <span className="font-bold text-text-primary">Mister Contabilidad</span>
+          </div>
+          <Link href="/login"
+            className="bg-primary text-primary-foreground font-semibold text-sm px-5 py-2 rounded-xl hover:bg-primary/90 transition-colors">
+            Ingresar
+          </Link>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <main className="flex-1">
+        <div className="max-w-5xl mx-auto px-6 py-20 text-center">
+          <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
+            ERP Contable para Pymes chilenas
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-black text-text-primary mb-6 leading-tight">
+            Contabilidad simple,<br />
+            <span className="text-primary">sin complicaciones</span>
+          </h1>
+          <p className="text-text-secondary text-lg max-w-xl mx-auto mb-10 leading-relaxed">
+            Mister Contabilidad es un ERP diseñado para contadores y Pymes en Chile.
+            Gestiona contabilidad, remuneraciones y facturación desde un solo lugar.
+          </p>
+          <Link href="/login"
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-bold text-base px-8 py-3.5 rounded-xl hover:bg-primary/90 transition-colors">
+            Acceder al sistema
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+
+        {/* Features */}
+        <div className="max-w-5xl mx-auto px-6 pb-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { icon: '📒', title: 'Contabilidad', desc: 'Libro diario, mayor, balance y estado de resultados' },
+              { icon: '👥', title: 'Remuneraciones', desc: 'Liquidaciones, cotizaciones y finiquitos' },
+              { icon: '🧾', title: 'Facturación', desc: 'Facturas y boletas electrónicas con el SII' },
+              { icon: '🏢', title: 'Multiempresa', desc: 'Gestiona varias empresas desde una sola cuenta' },
+            ].map(({ icon, title, desc }) => (
+              <div key={title} className="p-5 bg-surface rounded-2xl border border-border">
+                <div className="text-2xl mb-3">{icon}</div>
+                <h3 className="font-semibold text-text-primary text-sm mb-1">{title}</h3>
+                <p className="text-xs text-text-secondary leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border py-6 text-center">
+        <p className="text-xs text-text-disabled">
+          Mister Group © {new Date().getFullYear()} ·{' '}
+          <Link href="/politica-de-privacidad" className="hover:text-text-secondary transition-colors">Política de privacidad</Link>
+          {' · '}
+          <Link href="/terminos-de-servicio" className="hover:text-text-secondary transition-colors">Términos de servicio</Link>
+        </p>
       </footer>
     </div>
   )
