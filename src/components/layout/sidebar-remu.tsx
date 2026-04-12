@@ -49,9 +49,7 @@ export function SidebarRemu({ profile, onLogout }: SidebarRemuProps) {
       {/* Logo */}
       <div className="px-5 py-4 border-b border-border">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shrink-0">
-            <span className="text-primary-foreground font-black text-xs">MC</span>
-          </div>
+          <img src="/logo-icon.svg" alt="ERP Mister Group" className="w-8 h-8 shrink-0" />
           <div className="min-w-0">
             <p className="text-sm font-bold text-text-primary truncate">Remuneraciones</p>
             <p className="text-xs text-text-disabled truncate">{profile.company_name}</p>

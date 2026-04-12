@@ -130,10 +130,7 @@ function LandingPage() {
       <header className="border-b border-border">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
-              <span className="text-primary-foreground font-black text-sm">MC</span>
-            </div>
-            <span className="font-bold text-text-primary">ERP Mister Group</span>
+            <img src="/logo-white.svg" alt="ERP Mister Group" className="h-8" />
           </div>
           <Link href="/login"
             className="bg-primary text-primary-foreground font-semibold text-sm px-5 py-2 rounded-xl hover:bg-primary/90 transition-colors">

@@ -48,9 +48,7 @@ export function HomeHeader({ fullName, activeCompany, allCompanies, canAccessSis
       <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo + empresa */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
-            <span className="text-primary-foreground font-black text-sm">MC</span>
-          </div>
+          <img src="/logo-icon.svg" alt="ERP Mister Group" className="w-9 h-9" />
           <div>
             <p className="text-sm font-bold text-text-primary">ERP Mister Group</p>
 

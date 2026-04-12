@@ -14,10 +14,7 @@ export default function PoliticaPrivacidadPage() {
       <header className="border-b border-border bg-surface">
         <div className="max-w-3xl mx-auto px-6 py-5 flex items-center justify-between">
           <Link href="/login" className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
-              <span className="text-primary-foreground font-black text-sm">MC</span>
-            </div>
-            <span className="font-semibold text-text-primary">ERP Mister Group</span>
+            <img src="/logo-white.svg" alt="ERP Mister Group" className="h-8" />
           </Link>
           <span className="text-xs text-text-disabled">ERP · Mister Group</span>
         </div>

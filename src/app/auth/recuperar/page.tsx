@@ -29,9 +29,7 @@ export default function RecuperarPage() {
       <div className="w-full max-w-sm">
 
         <div className="flex flex-col items-center mb-10">
-          <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-4">
-            <span className="text-primary-foreground font-black text-2xl">MC</span>
-          </div>
+          <img src="/logo-white.svg" alt="ERP Mister Group" className="h-14 mb-4" />
           <h1 className="text-xl font-bold text-text-primary">Recuperar contraseña</h1>
           <p className="text-text-secondary text-sm mt-1 text-center">
             Te enviaremos un link para resetear tu contraseña
