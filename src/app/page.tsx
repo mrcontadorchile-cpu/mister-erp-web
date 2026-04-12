@@ -1,38 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { HomeHeader } from './_components/HomeHeader'
-import { hasAnyPermission, PERMISSIONS } from '@/lib/permissions'
-
-const modules = [
-  {
-    id: 'contabilidad',
-    label: 'Contabilidad',
-    description: 'Libro diario, mayor, plan de cuentas, balance y estado de resultados',
-    href: '/contabilidad/dashboard',
-    available: true,
-  },
-  {
-    id: 'remuneraciones',
-    label: 'Remuneraciones',
-    description: 'Liquidaciones de sueldo, cotizaciones y finiquitos',
-    href: '/remuneraciones/dashboard',
-    available: true,
-  },
-  {
-    id: 'facturacion',
-    label: 'Facturación',
-    description: 'Emisión de facturas, boletas y notas de crédito electrónicas',
-    href: '#',
-    available: false,
-  },
-  {
-    id: 'tesoreria',
-    label: 'Tesorería',
-    description: 'Conciliación bancaria, flujo de caja y cobranza',
-    href: '#',
-    available: false,
-  },
-]
+import { hasAnyPermission, hasModuleAccess, PERMISSIONS } from '@/lib/permissions'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -59,10 +28,9 @@ export default async function HomePage() {
   const allCompanies = (companiesData as { id: string; name: string; rut: string }[] | null)
     ?? (activeCompany ? [activeCompany] : [])
 
-  const canAccessSistema = hasAnyPermission(permissions, [
-    PERMISSIONS.SISTEMA_USUARIOS,
-    PERMISSIONS.SISTEMA_ROLES,
-  ])
+  const canAccessSistema  = hasAnyPermission(permissions, [PERMISSIONS.SISTEMA_USUARIOS, PERMISSIONS.SISTEMA_ROLES])
+  const canAccessConta    = hasModuleAccess(permissions, 'conta')
+  const canAccessRemu     = hasModuleAccess(permissions, 'remu')
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -81,37 +49,78 @@ export default async function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {modules.map(mod => (
-            mod.available ? (
-              <Link
-                key={mod.id}
-                href={mod.href}
-                className="group relative rounded-xl border border-primary/20 bg-primary/5 hover:border-primary/50 hover:bg-primary/10 p-6 transition-all duration-150"
-              >
-                <ModuleIcon id={mod.id} available />
-                <h2 className="text-base font-bold text-text-primary mb-1 mt-4">{mod.label}</h2>
-                <p className="text-xs text-text-secondary leading-relaxed">{mod.description}</p>
-                <div className="mt-4 flex items-center gap-1 text-xs text-primary font-medium">
-                  Ingresar
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+
+          {/* Contabilidad */}
+          {canAccessConta && (
+            <Link href="/contabilidad/dashboard"
+              className="group relative rounded-xl border border-primary/20 bg-primary/5 hover:border-primary/50 hover:bg-primary/10 p-6 transition-all duration-150">
+              <ModuleIcon id="contabilidad" available />
+              <h2 className="text-base font-bold text-text-primary mb-1 mt-4">Contabilidad</h2>
+              <p className="text-xs text-text-secondary leading-relaxed">Libro diario, mayor, plan de cuentas, balance y estado de resultados</p>
+              <div className="mt-4 flex items-center gap-1 text-xs text-primary font-medium">
+                Ingresar <ChevronRight />
+              </div>
+            </Link>
+          )}
+
+          {/* Remuneraciones */}
+          {canAccessRemu && (
+            <Link href="/remuneraciones/dashboard"
+              className="group relative rounded-xl border border-primary/20 bg-primary/5 hover:border-primary/50 hover:bg-primary/10 p-6 transition-all duration-150">
+              <ModuleIcon id="remuneraciones" available />
+              <h2 className="text-base font-bold text-text-primary mb-1 mt-4">Remuneraciones</h2>
+              <p className="text-xs text-text-secondary leading-relaxed">Liquidaciones de sueldo, cotizaciones y finiquitos</p>
+              <div className="mt-4 flex items-center gap-1 text-xs text-primary font-medium">
+                Ingresar <ChevronRight />
+              </div>
+            </Link>
+          )}
+
+          {/* Facturación — próximamente */}
+          <div className="relative rounded-xl border border-border bg-surface p-6 opacity-50">
+            <ModuleIcon id="facturacion" available={false} />
+            <h2 className="text-base font-bold text-text-primary mb-1 mt-4">Facturación</h2>
+            <p className="text-xs text-text-secondary leading-relaxed">Emisión de facturas, boletas y notas de crédito electrónicas</p>
+            <span className="absolute top-4 right-4 text-[10px] font-semibold text-text-disabled bg-surface-high px-2 py-0.5 rounded-full border border-border">
+              Próximamente
+            </span>
+          </div>
+
+          {/* Tesorería — próximamente */}
+          <div className="relative rounded-xl border border-border bg-surface p-6 opacity-50">
+            <ModuleIcon id="tesoreria" available={false} />
+            <h2 className="text-base font-bold text-text-primary mb-1 mt-4">Tesorería</h2>
+            <p className="text-xs text-text-secondary leading-relaxed">Conciliación bancaria, flujo de caja y cobranza</p>
+            <span className="absolute top-4 right-4 text-[10px] font-semibold text-text-disabled bg-surface-high px-2 py-0.5 rounded-full border border-border">
+              Próximamente
+            </span>
+          </div>
+
+          {/* Seguridad — solo admins */}
+          {canAccessSistema && (
+            <Link href="/sistema/usuarios"
+              className="group relative rounded-xl border border-border bg-surface hover:border-primary/30 hover:bg-primary/5 p-6 transition-all duration-150 sm:col-span-2">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-surface-high text-text-secondary group-hover:text-primary group-hover:bg-primary/20 transition-colors shrink-0">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                      d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
-              </Link>
-            ) : (
-              <div
-                key={mod.id}
-                className="relative rounded-xl border border-border bg-surface p-6 opacity-50"
-              >
-                <ModuleIcon id={mod.id} available={false} />
-                <h2 className="text-base font-bold text-text-primary mb-1 mt-4">{mod.label}</h2>
-                <p className="text-xs text-text-secondary leading-relaxed">{mod.description}</p>
-                <span className="absolute top-4 right-4 text-[10px] font-semibold text-text-disabled bg-surface-high px-2 py-0.5 rounded-full border border-border">
-                  Próximamente
-                </span>
+                <div className="flex-1">
+                  <h2 className="text-base font-bold text-text-primary mb-0.5">Seguridad</h2>
+                  <p className="text-xs text-text-secondary">Gestiona usuarios, roles y permisos de acceso por módulo para cada integrante de tu empresa</p>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-primary font-medium shrink-0">
+                  Administrar <ChevronRight />
+                </div>
               </div>
-            )
-          ))}
+              <span className="absolute top-4 right-16 text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+                Admin
+              </span>
+            </Link>
+          )}
+
         </div>
       </main>
 
@@ -191,6 +200,14 @@ function LandingPage() {
         </p>
       </footer>
     </div>
+  )
+}
+
+function ChevronRight() {
+  return (
+    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
   )
 }
 

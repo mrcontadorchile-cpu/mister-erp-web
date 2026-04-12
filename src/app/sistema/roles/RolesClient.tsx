@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { PERMISSION_GROUPS } from '@/lib/permissions'
+import { MODULE_PERMISSIONS, getModuleAllPermissions } from '@/lib/permissions'
 import { createRole, updateRolePermissions, deleteRole } from './actions'
 
 interface Role {
@@ -13,20 +13,18 @@ interface Role {
   member_count: number
 }
 
-interface Props {
-  roles: Role[]
-}
+interface Props { roles: Role[] }
 
 export function RolesClient({ roles: initialRoles }: Props) {
-  const [roles, setRoles] = useState(initialRoles)
+  const [roles, setRoles]           = useState(initialRoles)
   const [isPending, startTransition] = useTransition()
-  const [editing, setEditing] = useState<string | null>(null)
-  const [editPerms, setEditPerms] = useState<string[]>([])
+  const [editing, setEditing]       = useState<string | null>(null)
+  const [editPerms, setEditPerms]   = useState<string[]>([])
   const [showCreate, setShowCreate] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [newDesc, setNewDesc] = useState('')
-  const [newPerms, setNewPerms] = useState<string[]>([])
-  const [error, setError] = useState('')
+  const [newName, setNewName]       = useState('')
+  const [newDesc, setNewDesc]       = useState('')
+  const [newPerms, setNewPerms]     = useState<string[]>([])
+  const [error, setError]           = useState('')
 
   function startEdit(role: Role) {
     setEditing(role.id)
@@ -35,10 +33,23 @@ export function RolesClient({ roles: initialRoles }: Props) {
   }
 
   function togglePerm(perms: string[], perm: string, setter: (p: string[]) => void) {
-    if (perms.includes(perm)) {
-      setter(perms.filter(p => p !== perm))
+    setter(perms.includes(perm) ? perms.filter(p => p !== perm) : [...perms, perm])
+  }
+
+  function toggleAll(perms: string[], setter: (p: string[]) => void) {
+    // Toggle between full admin (*) and empty
+    setter(perms.includes('*') ? [] : ['*'])
+  }
+
+  function toggleModule(modulePrefix: string, perms: string[], setter: (p: string[]) => void) {
+    if (perms.includes('*')) return // full admin, no-op
+    const modulePerms = getModuleAllPermissions(modulePrefix)
+    const hasAll = modulePerms.every(p => perms.includes(p))
+    if (hasAll) {
+      setter(perms.filter(p => !modulePerms.includes(p)))
     } else {
-      setter([...perms, perm])
+      const merged = Array.from(new Set([...perms, ...modulePerms]))
+      setter(merged)
     }
   }
 
@@ -56,14 +67,11 @@ export function RolesClient({ roles: initialRoles }: Props) {
   }
 
   function handleDelete(roleId: string) {
-    if (!confirm('¿Eliminar este rol?')) return
+    if (!confirm('¿Eliminar este rol? Esta acción no se puede deshacer.')) return
     startTransition(async () => {
       const res = await deleteRole(roleId)
-      if (!res.ok) {
-        alert(res.error)
-      } else {
-        setRoles(prev => prev.filter(r => r.id !== roleId))
-      }
+      if (!res.ok) alert(res.error)
+      else setRoles(prev => prev.filter(r => r.id !== roleId))
     })
   }
 
@@ -85,7 +93,7 @@ export function RolesClient({ roles: initialRoles }: Props) {
 
   return (
     <div className="space-y-5">
-      {/* Create button */}
+      {/* Header actions */}
       <div className="flex justify-end">
         <button
           onClick={() => { setShowCreate(v => !v); setError('') }}
@@ -106,41 +114,26 @@ export function RolesClient({ roles: initialRoles }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-text-disabled block mb-1">Nombre del rol *</label>
-                <input
-                  required
-                  value={newName}
-                  onChange={e => setNewName(e.target.value)}
-                  className="input w-full text-sm"
-                  placeholder="Ej: Tesorero"
-                />
+                <input required value={newName} onChange={e => setNewName(e.target.value)}
+                  className="input w-full text-sm" placeholder="Ej: Contador Junior" />
               </div>
               <div>
                 <label className="text-xs text-text-disabled block mb-1">Descripción</label>
-                <input
-                  value={newDesc}
-                  onChange={e => setNewDesc(e.target.value)}
-                  className="input w-full text-sm"
-                  placeholder="Descripción breve"
-                />
+                <input value={newDesc} onChange={e => setNewDesc(e.target.value)}
+                  className="input w-full text-sm" placeholder="Descripción breve" />
               </div>
             </div>
-            <div>
-              <p className="text-xs text-text-disabled mb-2">Permisos</p>
-              <PermissionCheckboxes
-                selected={newPerms}
-                onToggle={perm => togglePerm(newPerms, perm, setNewPerms)}
-              />
-            </div>
+            <PermissionEditor selected={newPerms} setter={setNewPerms}
+              onTogglePerm={p => togglePerm(newPerms, p, setNewPerms)}
+              onToggleModule={m => toggleModule(m, newPerms, setNewPerms)}
+              onToggleAll={() => toggleAll(newPerms, setNewPerms)} />
             {error && <p className="text-error text-xs">{error}</p>}
             <div className="flex gap-2">
               <button type="submit" disabled={isPending} className="btn-primary text-sm px-4 py-2">
                 {isPending ? 'Creando...' : 'Crear rol'}
               </button>
-              <button
-                type="button"
-                onClick={() => setShowCreate(false)}
-                className="text-sm px-4 py-2 rounded-lg border border-border text-text-secondary hover:text-text-primary"
-              >
+              <button type="button" onClick={() => setShowCreate(false)}
+                className="text-sm px-4 py-2 rounded-lg border border-border text-text-secondary hover:text-text-primary">
                 Cancelar
               </button>
             </div>
@@ -156,7 +149,7 @@ export function RolesClient({ roles: initialRoles }: Props) {
               <div className="flex items-center gap-3">
                 <div className={`w-2 h-2 rounded-full ${role.is_system ? 'bg-primary' : 'bg-success'}`} />
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-sm">{role.name}</p>
                     {role.is_system && (
                       <span className="badge bg-primary/10 text-primary text-[10px]">sistema</span>
@@ -164,9 +157,14 @@ export function RolesClient({ roles: initialRoles }: Props) {
                     {role.permissions.includes('*') && (
                       <span className="badge bg-warning/10 text-warning text-[10px]">acceso total</span>
                     )}
+                    {!role.permissions.includes('*') && role.permissions.length > 0 && (
+                      <span className="text-[10px] text-text-disabled">
+                        {role.permissions.length} permiso{role.permissions.length !== 1 ? 's' : ''}
+                      </span>
+                    )}
                   </div>
                   {role.description && (
-                    <p className="text-xs text-text-disabled">{role.description}</p>
+                    <p className="text-xs text-text-disabled mt-0.5">{role.description}</p>
                   )}
                 </div>
               </div>
@@ -174,71 +172,65 @@ export function RolesClient({ roles: initialRoles }: Props) {
                 <span className="text-xs text-text-disabled">
                   {role.member_count} {role.member_count === 1 ? 'usuario' : 'usuarios'}
                 </span>
-                {!role.is_system && (
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => editing === role.id ? setEditing(null) : startEdit(role)}
-                      className="text-xs px-2 py-1 rounded text-text-secondary hover:bg-surface-high transition-colors"
-                    >
-                      {editing === role.id ? 'Cerrar' : 'Editar permisos'}
-                    </button>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => editing === role.id ? setEditing(null) : startEdit(role)}
+                    className="text-xs px-2 py-1 rounded text-text-secondary hover:bg-surface-high transition-colors"
+                  >
+                    {editing === role.id ? 'Cerrar' : role.is_system && role.permissions.includes('*') ? 'Ver' : 'Editar permisos'}
+                  </button>
+                  {!role.is_system && (
                     <button
                       onClick={() => handleDelete(role.id)}
                       disabled={role.member_count > 0 || isPending}
                       className="text-xs px-2 py-1 rounded text-error hover:bg-error/10 transition-colors disabled:opacity-40"
+                      title={role.member_count > 0 ? 'No se puede eliminar un rol con usuarios asignados' : ''}
                     >
                       Eliminar
                     </button>
-                  </div>
-                )}
-                {role.is_system && !role.permissions.includes('*') && (
-                  <button
-                    onClick={() => editing === role.id ? setEditing(null) : startEdit(role)}
-                    className="text-xs px-2 py-1 rounded text-text-secondary hover:bg-surface-high transition-colors"
-                    title="Los roles de sistema son de solo lectura"
-                  >
-                    Ver permisos
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Permissions summary (when not editing) */}
-            {editing !== role.id && !role.permissions.includes('*') && (
-              <div className="px-4 pb-3 flex flex-wrap gap-1">
-                {role.permissions.slice(0, 8).map(p => (
-                  <span key={p} className="badge bg-surface-high text-text-secondary text-[10px]">{p}</span>
-                ))}
-                {role.permissions.length > 8 && (
-                  <span className="badge bg-surface-high text-text-disabled text-[10px]">
-                    +{role.permissions.length - 8} más
-                  </span>
-                )}
+            {/* Module summary chips */}
+            {editing !== role.id && !role.permissions.includes('*') && role.permissions.length > 0 && (
+              <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+                {MODULE_PERMISSIONS.map(mod => {
+                  const modPerms = getModuleAllPermissions(mod.module)
+                  const count = role.permissions.filter(p => modPerms.includes(p)).length
+                  if (count === 0) return null
+                  return (
+                    <span key={mod.module}
+                      className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      {mod.label}
+                      <span className="opacity-60">({count})</span>
+                    </span>
+                  )
+                })}
               </div>
             )}
 
             {/* Edit panel */}
             {editing === role.id && (
-              <div className="border-t border-border p-4 bg-surface-high/50">
-                <PermissionCheckboxes
+              <div className="border-t border-border p-4 bg-surface-high/30">
+                <PermissionEditor
                   selected={editPerms}
-                  onToggle={perm => togglePerm(editPerms, perm, setEditPerms)}
-                  readOnly={role.is_system}
+                  setter={setEditPerms}
+                  onTogglePerm={p => togglePerm(editPerms, p, setEditPerms)}
+                  onToggleModule={m => toggleModule(m, editPerms, setEditPerms)}
+                  onToggleAll={() => toggleAll(editPerms, setEditPerms)}
+                  readOnly={role.is_system && role.permissions.includes('*')}
                 />
                 {error && <p className="text-error text-xs mt-2">{error}</p>}
-                {!role.is_system && (
+                {!(role.is_system && role.permissions.includes('*')) && (
                   <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={() => handleSaveEdit(role.id)}
-                      disabled={isPending}
-                      className="btn-primary text-xs px-3 py-1.5"
-                    >
+                    <button onClick={() => handleSaveEdit(role.id)} disabled={isPending}
+                      className="btn-primary text-xs px-3 py-1.5">
                       {isPending ? 'Guardando...' : 'Guardar cambios'}
                     </button>
-                    <button
-                      onClick={() => setEditing(null)}
-                      className="text-xs px-3 py-1.5 rounded-lg border border-border text-text-secondary"
-                    >
+                    <button onClick={() => setEditing(null)}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-border text-text-secondary">
                       Cancelar
                     </button>
                   </div>
@@ -252,42 +244,130 @@ export function RolesClient({ roles: initialRoles }: Props) {
   )
 }
 
-function PermissionCheckboxes({
-  selected,
-  onToggle,
-  readOnly = false,
+// ── Permission editor component ───────────────────────────────
+
+function PermissionEditor({
+  selected, setter, onTogglePerm, onToggleModule, onToggleAll, readOnly = false,
 }: {
   selected: string[]
-  onToggle: (perm: string) => void
+  setter: (p: string[]) => void
+  onTogglePerm: (p: string) => void
+  onToggleModule: (m: string) => void
+  onToggleAll: () => void
   readOnly?: boolean
 }) {
+  const [openModules, setOpenModules] = useState<Record<string, boolean>>({})
+
+  function toggleOpen(module: string) {
+    setOpenModules(prev => ({ ...prev, [module]: !prev[module] }))
+  }
+
+  const isFullAdmin = selected.includes('*')
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {PERMISSION_GROUPS.map(group => (
-        <div key={group.group}>
-          <p className="text-[10px] font-semibold text-text-disabled uppercase tracking-wider mb-1.5">
-            {group.group}
-          </p>
-          <ul className="space-y-1">
-            {group.permissions.map(({ key, label }) => (
-              <li key={key}>
-                <label className={`flex items-center gap-2 text-xs ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}>
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(key)}
-                    onChange={() => !readOnly && onToggle(key)}
-                    disabled={readOnly}
-                    className="w-3.5 h-3.5 rounded accent-primary"
-                  />
-                  <span className={selected.includes(key) ? 'text-text-primary' : 'text-text-secondary'}>
-                    {label}
-                  </span>
-                </label>
-              </li>
-            ))}
-          </ul>
+    <div className="space-y-2">
+      {/* Acceso total */}
+      <label className={`flex items-center gap-3 p-3 rounded-xl border-2 transition-colors ${
+        isFullAdmin ? 'border-warning/50 bg-warning/5' : 'border-border bg-surface'
+      } ${readOnly ? 'cursor-default' : 'cursor-pointer hover:border-warning/30'}`}>
+        <input type="checkbox" checked={isFullAdmin}
+          onChange={() => !readOnly && onToggleAll()}
+          disabled={readOnly}
+          className="w-4 h-4 rounded accent-primary" />
+        <div>
+          <p className="text-sm font-semibold text-text-primary">Acceso total (Administrador)</p>
+          <p className="text-xs text-text-secondary">Acceso completo a todos los módulos y funciones del ERP</p>
         </div>
-      ))}
+        {isFullAdmin && (
+          <span className="ml-auto text-[10px] font-bold text-warning bg-warning/10 px-2 py-0.5 rounded-full">ADMIN</span>
+        )}
+      </label>
+
+      {/* Divider */}
+      <div className="flex items-center gap-2 py-1">
+        <div className="flex-1 h-px bg-border" />
+        <span className="text-xs text-text-disabled">o configura por módulo</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+
+      {/* Per-module */}
+      <div className={`space-y-2 ${isFullAdmin ? 'opacity-40 pointer-events-none' : ''}`}>
+        {MODULE_PERMISSIONS.map(mod => {
+          const modPerms  = getModuleAllPermissions(mod.module)
+          const hasAll    = modPerms.every(p => selected.includes(p))
+          const hasSome   = modPerms.some(p => selected.includes(p)) && !hasAll
+          const isOpen    = openModules[mod.module] ?? false
+
+          return (
+            <div key={mod.module} className={`rounded-xl border overflow-hidden transition-colors ${
+              hasAll ? 'border-primary/40 bg-primary/5' :
+              hasSome ? 'border-primary/20 bg-primary/3' : 'border-border bg-surface'
+            }`}>
+              {/* Module header */}
+              <div className="flex items-center gap-3 p-3">
+                <input
+                  type="checkbox"
+                  checked={hasAll}
+                  ref={el => { if (el) el.indeterminate = hasSome }}
+                  onChange={() => !readOnly && onToggleModule(mod.module)}
+                  disabled={readOnly}
+                  className="w-4 h-4 rounded accent-primary shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-text-primary">{mod.label}</p>
+                  <p className="text-xs text-text-disabled truncate">{mod.description}</p>
+                </div>
+                {(hasAll || hasSome) && (
+                  <span className="text-[10px] text-primary shrink-0">
+                    {modPerms.filter(p => selected.includes(p)).length}/{modPerms.length}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => toggleOpen(mod.module)}
+                  className="text-text-disabled hover:text-text-secondary transition-colors shrink-0 ml-1"
+                >
+                  <svg className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Subgroups */}
+              {isOpen && (
+                <div className="border-t border-border px-4 py-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                  {mod.groups.map(grp => (
+                    <div key={grp.group}>
+                      <p className="text-[10px] font-semibold text-text-disabled uppercase tracking-wider mb-1.5">
+                        {grp.group}
+                      </p>
+                      <ul className="space-y-1">
+                        {grp.permissions.map(({ key, label }) => (
+                          <li key={key}>
+                            <label className={`flex items-center gap-2 text-xs ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}>
+                              <input
+                                type="checkbox"
+                                checked={selected.includes(key)}
+                                onChange={() => !readOnly && onTogglePerm(key)}
+                                disabled={readOnly}
+                                className="w-3.5 h-3.5 rounded accent-primary"
+                              />
+                              <span className={selected.includes(key) ? 'text-text-primary' : 'text-text-secondary'}>
+                                {label}
+                              </span>
+                            </label>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
