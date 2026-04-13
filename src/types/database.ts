@@ -155,3 +155,21 @@ export interface UserProfile {
   /** All companies this user belongs to */
   companies: { id: string; name: string; rut: string }[]
 }
+
+export interface EntidadMapeo {
+  nombre: string
+  rut: string
+  cuenta_particular?: string
+  cuenta_empresa?: string
+}
+
+export interface ConfiguracionAsistente {
+  id: string
+  company_id: string
+  instrucciones_maestras: string
+  umbral_autonomia: number
+  auto_matching_nc: boolean
+  mapeo_entidades: EntidadMapeo[]
+  created_at: string
+  updated_at: string
+}

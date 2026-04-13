@@ -29,6 +29,7 @@ const nav = [
       { href: '/contabilidad/documentos-sii', label: 'Documentos',   icon: FileTextIcon,      permission: PERMISSIONS.CONTA_SII_VIEW },
       { href: '/contabilidad/importar-sii',   label: 'Importar SII',    icon: CloudDownloadIcon, permission: PERMISSIONS.CONTA_SII_IMPORT },
       { href: '/contabilidad/validaciones',   label: 'Validaciones IA', icon: SparklesIcon,      permission: PERMISSIONS.CONTA_VALIDACIONES_VIEW },
+      { href: '/contabilidad/ia-agente',      label: 'Agente IA',       icon: BotIcon,           permission: PERMISSIONS.CONTA_VALIDACIONES_MANAGE },
     ],
   },
   {
@@ -368,5 +369,13 @@ function SparklesIcon({ className }: { className?: string }) {
   return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
       d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+  </svg>
+}
+function BotIcon({ className }: { className?: string }) {
+  return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+      d="M9 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2h-2M9 3a2 2 0 002 2h2a2 2 0 002-2M9 3h6M9 12h.01M15 12h.01M9 16h6" />
+    <circle cx="9" cy="12" r="0.5" fill="currentColor" />
+    <circle cx="15" cy="12" r="0.5" fill="currentColor" />
   </svg>
 }

@@ -124,6 +124,17 @@ export default async function DashboardPage() {
       </div>
 
       <SectionTitle title="IA Contable" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
+      <a
+        href="/contabilidad/ia-agente"
+        className="card p-4 flex items-center gap-3 hover:border-primary/40 transition-colors group"
+      >
+        <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0 text-lg">🤖</div>
+        <div>
+          <p className="text-sm font-semibold text-text-primary group-hover:text-primary transition-colors">Agente IA</p>
+          <p className="text-xs text-text-disabled mt-0.5">Comandos en lenguaje natural</p>
+        </div>
+      </a>
       <a
         href="/contabilidad/validaciones"
         className="card p-4 flex items-center justify-between hover:border-primary/40 transition-colors group"
@@ -149,6 +160,7 @@ export default async function DashboardPage() {
           </span>
         )}
       </a>
+      </div>
     </div>
   )
 }
