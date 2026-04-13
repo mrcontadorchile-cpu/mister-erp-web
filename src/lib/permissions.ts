@@ -22,6 +22,8 @@ export const PERMISSIONS = {
   CONTA_PERIODOS_MANAGE:   'conta.periodos.manage',
   CONTA_CONFIG_VIEW:       'conta.config.view',
   CONTA_CONFIG_MANAGE:     'conta.config.manage',
+  CONTA_VALIDACIONES_VIEW:   'conta.validaciones.view',
+  CONTA_VALIDACIONES_MANAGE: 'conta.validaciones.manage',
   // ── Remuneraciones ───────────────────────────────────────
   REMU_DASHBOARD_VIEW:       'remu.dashboard.view',
   REMU_EMPLEADOS_VIEW:       'remu.empleados.view',

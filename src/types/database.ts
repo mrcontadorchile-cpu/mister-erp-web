@@ -8,7 +8,36 @@ export type PeriodStatus = 'open' | 'closed'
 export type JournalEntryType = 'MANUAL' | 'SII_FACTURA' | 'SII_HONORARIO' | 'INVENTARIO_VENTA' | 'INVENTARIO_COMPRA'
 export type JournalEntryStatus = 'draft' | 'posted' | 'reversed'
 export type TaxDocumentType = 'FACTURA_COMPRA' | 'FACTURA_VENTA' | 'BOLETA_HONORARIO' | 'NOTA_CREDITO' | 'NOTA_DEBITO'
-export type TaxDocumentStatus = 'pending' | 'journalized' | 'rejected'
+export type TaxDocumentStatus = 'pending' | 'journalized' | 'rejected' | 'pendiente_validacion'
+
+export type BorradorStatus = 'pendiente' | 'aprobado' | 'corregido' | 'rechazado'
+
+export interface AsientoBorrador {
+  id: string
+  company_id: string
+  tax_document_id: string | null
+  doc_type: string
+  folio: number | null
+  date: string
+  rut_counterpart: string
+  name_counterpart: string
+  glosa: string
+  net_amount: number | null
+  tax_amount: number | null
+  total_amount: number | null
+  ia_account_debe_code: string | null
+  ia_account_haber_code: string | null
+  ia_confidence: number | null
+  ia_razon: string | null
+  status: BorradorStatus
+  account_debe_code: string | null
+  account_haber_code: string | null
+  journal_entry_id: string | null
+  reviewed_by: string | null
+  reviewed_at: string | null
+  created_at: string
+  updated_at: string
+}
 
 export interface Account {
   id: string

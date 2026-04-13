@@ -27,7 +27,8 @@ const nav = [
     group: 'DOCUMENTOS SII',
     items: [
       { href: '/contabilidad/documentos-sii', label: 'Documentos',   icon: FileTextIcon,      permission: PERMISSIONS.CONTA_SII_VIEW },
-      { href: '/contabilidad/importar-sii',   label: 'Importar SII', icon: CloudDownloadIcon, permission: PERMISSIONS.CONTA_SII_IMPORT },
+      { href: '/contabilidad/importar-sii',   label: 'Importar SII',    icon: CloudDownloadIcon, permission: PERMISSIONS.CONTA_SII_IMPORT },
+      { href: '/contabilidad/validaciones',   label: 'Validaciones IA', icon: SparklesIcon,      permission: PERMISSIONS.CONTA_VALIDACIONES_VIEW },
     ],
   },
   {
@@ -361,5 +362,11 @@ function LogoutIcon({ className }: { className?: string }) {
   return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
       d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+  </svg>
+}
+function SparklesIcon({ className }: { className?: string }) {
+  return <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+      d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
   </svg>
 }

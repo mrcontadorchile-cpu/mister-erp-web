@@ -26,7 +26,7 @@ export default async function DashboardPage() {
     .maybeSingle()
 
   // Conteos en paralelo
-  const [journalRes, taxRes, pendingRes] = await Promise.all([
+  const [journalRes, taxRes, pendingRes, validacionesRes] = await Promise.all([
     supabase.schema('conta').from('journal_entries')
       .select('*', { count: 'exact', head: true })
       .eq('company_id', companyId)
@@ -38,12 +38,17 @@ export default async function DashboardPage() {
       .select('*', { count: 'exact', head: true })
       .eq('company_id', companyId)
       .eq('status', 'pending'),
+    supabase.schema('conta').from('asientos_borrador')
+      .select('*', { count: 'exact', head: true })
+      .eq('company_id', companyId)
+      .eq('status', 'pendiente'),
   ])
 
   const stats = {
     journalEntries:   journalRes.count ?? 0,
     taxDocuments:     taxRes.count ?? 0,
     pendingDocuments: pendingRes.count ?? 0,
+    validacionesPend: validacionesRes.count ?? 0,
   }
 
   const isClosed = period?.status === 'closed'
@@ -113,10 +118,37 @@ export default async function DashboardPage() {
       </div>
 
       <SectionTitle title="Documentos SII" />
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 mb-8">
         <NavCard href="/importar-sii"   label="Importar SII"  color="#FFD700" />
         <NavCard href="/documentos-sii" label="Ver Documentos" color="#2196F3" />
       </div>
+
+      <SectionTitle title="IA Contable" />
+      <a
+        href="/contabilidad/validaciones"
+        className="card p-4 flex items-center justify-between hover:border-primary/40 transition-colors group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-lg">
+            ✨
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-text-primary group-hover:text-primary transition-colors">
+              Validaciones IA
+            </p>
+            <p className="text-xs text-text-disabled mt-0.5">
+              {stats.validacionesPend > 0
+                ? `${stats.validacionesPend} documento${stats.validacionesPend > 1 ? 's' : ''} esperando revisión`
+                : 'Sin pendientes'}
+            </p>
+          </div>
+        </div>
+        {stats.validacionesPend > 0 && (
+          <span className="bg-warning text-black text-xs font-bold px-2.5 py-1 rounded-full shrink-0">
+            {stats.validacionesPend}
+          </span>
+        )}
+      </a>
     </div>
   )
 }
