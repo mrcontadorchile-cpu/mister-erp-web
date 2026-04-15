@@ -41,6 +41,33 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <!-- ZXing: librería para escaneo de códigos de barras desde la cámara web -->
+  <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
+  <script>
+    var _zxingReader = null;
+
+    function MisterScannerStart(videoElementId, dartCallback) {
+      if (typeof ZXing === 'undefined') {
+        setTimeout(function() { MisterScannerStart(videoElementId, dartCallback); }, 200);
+        return;
+      }
+      var codeReader = new ZXing.BrowserMultiFormatReader();
+      _zxingReader = codeReader;
+      codeReader.decodeFromVideoDevice(null, videoElementId, function(result, err) {
+        if (result) {
+          dartCallback(result.getText());
+        }
+      });
+    }
+
+    function MisterScannerStop() {
+      if (_zxingReader) {
+        _zxingReader.reset();
+        _zxingReader = null;
+      }
+    }
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
