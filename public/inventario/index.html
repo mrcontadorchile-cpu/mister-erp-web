@@ -31,8 +31,55 @@
 
   <title>Mister Inventario</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    body { margin: 0; background: #000; }
+  </style>
 </head>
 <body>
+  <!-- Splash screen: visible inmediatamente mientras Flutter carga -->
+  <div id="mi-splash">
+    <style>
+      #mi-splash {
+        position: fixed; inset: 0;
+        background: #000000;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        z-index: 9999;
+        transition: opacity 0.35s ease;
+      }
+      #mi-splash.fade-out { opacity: 0; pointer-events: none; }
+      #mi-splash img { width: 96px; height: 96px; border-radius: 22px; }
+      #mi-splash .mi-nombre {
+        margin-top: 16px;
+        color: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 20px; font-weight: 700; letter-spacing: 0.3px;
+      }
+      #mi-splash .mi-nombre span { color: #FFD700; }
+      #mi-splash .mi-ring {
+        margin-top: 32px;
+        width: 28px; height: 28px;
+        border: 3px solid rgba(255,215,0,0.2);
+        border-top-color: #FFD700;
+        border-radius: 50%;
+        animation: mi-spin 0.8s linear infinite;
+      }
+      @keyframes mi-spin { to { transform: rotate(360deg); } }
+    </style>
+    <img src="favicon.png" alt="Mister Inventario">
+    <div class="mi-nombre">Mister <span>Inventario</span></div>
+    <div class="mi-ring"></div>
+  </div>
+
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var splash = document.getElementById('mi-splash');
+      if (splash) {
+        splash.classList.add('fade-out');
+        setTimeout(function () { splash.remove(); }, 380);
+      }
+    });
+  </script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
