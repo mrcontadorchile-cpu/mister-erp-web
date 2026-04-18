@@ -35,25 +35,19 @@ export async function GET(request: NextRequest) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const db = admin as any
 
-      // Ensure user_profiles row exists (ignoreDuplicates = no sobreescribir datos existentes)
-      await admin.from('user_profiles').upsert({
-        id:         data.user.id,
-        full_name:  data.user.user_metadata?.full_name
-                    ?? data.user.user_metadata?.name
-                    ?? data.user.email?.split('@')[0]
-                    ?? 'Usuario',
-        role:       'admin',
-        company_id: null,
-      }, { onConflict: 'id', ignoreDuplicates: true })
-
-      let invitedCompanyId: string | null = null
-      let isNewUser = false
+      const fullName =
+        data.user.user_metadata?.full_name
+        ?? data.user.user_metadata?.name
+        ?? data.user.email?.split('@')[0]
+        ?? 'Usuario'
 
       // El token puede llegar por dos vías:
       // 1. URL query param: Google OAuth siempre lo preserva
       // 2. user_metadata.invite_token: guardado en signUp(), sobrevive aunque
       //    Supabase recorte los query params del emailRedirectTo
       const invToken = urlToken ?? (data.user.user_metadata?.invite_token as string | undefined) ?? null
+
+      let invitedCompanyId: string | null = null
 
       // ── Flujo con token (Google OAuth + email/contraseña) ───────────────
       if (invToken) {
@@ -62,7 +56,9 @@ export async function GET(request: NextRequest) {
           .select('id, company_id, role_id, invited_by, expires_at')
           .eq('token', invToken)
           .is('accepted_at', null)
-          .maybeSingle() as { data: { id: string; company_id: string; role_id: string; invited_by: string | null; expires_at: string } | null }
+          .maybeSingle() as {
+            data: { id: string; company_id: string; role_id: string; invited_by: string | null; expires_at: string } | null
+          }
 
         if (inv && new Date(inv.expires_at) > new Date()) {
           // Crear/actualizar membresía
@@ -82,13 +78,15 @@ export async function GET(request: NextRequest) {
 
           invitedCompanyId = inv.company_id
 
-          // ¿Es usuario nuevo? (sin empresa previa)
-          const { data: profile } = await admin
-            .from('user_profiles')
-            .select('company_id')
-            .eq('id', data.user.id)
-            .maybeSingle()
-          isNewUser = !profile?.company_id
+          // Crear/actualizar perfil con la empresa correcta.
+          // user_profiles.company_id es NOT NULL — no se puede insertar null.
+          // Hacemos upsert con ignoreDuplicates: false para actualizar si ya existe.
+          await admin.from('user_profiles').upsert({
+            id:         data.user.id,
+            full_name:  fullName,
+            role:       'admin',
+            company_id: inv.company_id,
+          }, { onConflict: 'id', ignoreDuplicates: false })
         }
       }
 
@@ -99,7 +97,15 @@ export async function GET(request: NextRequest) {
           p_email:   data.user.email,
         }) as { data: { company_id: string; is_new_user: boolean }[] | null }
         invitedCompanyId = accepted?.[0]?.company_id ?? null
-        isNewUser        = accepted?.[0]?.is_new_user ?? false
+
+        if (invitedCompanyId) {
+          await admin.from('user_profiles').upsert({
+            id:         data.user.id,
+            full_name:  fullName,
+            role:       'admin',
+            company_id: invitedCompanyId,
+          }, { onConflict: 'id', ignoreDuplicates: false })
+        }
       }
 
       // ── Compatibilidad: activar membresías legacy con status='invited' ───
@@ -109,8 +115,7 @@ export async function GET(request: NextRequest) {
         .eq('user_id', data.user.id)
         .eq('status', 'invited')
 
-      // ── Determinar empresa activa ────────────────────────────────────────
-      // Prioridad: invitación aceptada > legacy company_id en URL > membresía más reciente
+      // ── Para flujos sin invitación: determinar empresa activa ────────────
       let targetCompanyId: string | null = invitedCompanyId
 
       if (!targetCompanyId && companyId) {
@@ -136,30 +141,19 @@ export async function GET(request: NextRequest) {
         targetCompanyId = latest?.company_id ?? null
       }
 
-      // Actualizar empresa activa en el perfil
-      if (targetCompanyId) {
-        if (invitedCompanyId) {
-          // Siempre cambiar la empresa al aceptar una invitación
-          await admin
-            .from('user_profiles')
-            .update({ company_id: targetCompanyId })
-            .eq('id', data.user.id)
-        } else {
-          // Login normal: solo si no tiene empresa asignada
-          await admin
-            .from('user_profiles')
-            .update({ company_id: targetCompanyId })
-            .eq('id', data.user.id)
-            .is('company_id', null)
-        }
+      // Para login normal (no invitación): actualizar empresa si no tiene
+      if (targetCompanyId && !invitedCompanyId) {
+        await admin
+          .from('user_profiles')
+          .update({ company_id: targetCompanyId })
+          .eq('id', data.user.id)
+          .is('company_id', null)
       }
 
       // ── Redirect ─────────────────────────────────────────────────────────
       if (type === 'recovery') {
         return NextResponse.redirect(`${origin}/auth/nueva-contrasena`)
       }
-      // Usuarios invitados: ya crearon cuenta en /auth/aceptar-invitacion,
-      // no necesitan pasar por configurar-cuenta (ya tienen contraseña y nombre)
       if (invitedCompanyId) {
         return NextResponse.redirect(`${origin}/`)
       }
