@@ -38,6 +38,7 @@ export default async function SistemaLayout({ children }: { children: React.Reac
     company_rut: activeCompany?.rut ?? '',
     permissions,
     companies: [],
+    features: [] as string[],
   }
 
   return <SistemaShell profile={userProfile}>{children}</SistemaShell>

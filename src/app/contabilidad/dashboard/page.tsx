@@ -4,29 +4,26 @@ import { formatNumber, monthName } from '@/lib/utils'
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile }  = await supabase
-    .from('user_profiles')
-    .select('company_id, companies(name, rut)')
-    .eq('id', user!.id)
-    .single()
+  // getUser + profile en paralelo para evitar cascada
+  const [{ data: { user } }, { data: profile }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from('user_profiles').select('company_id, companies(name, rut)').single(),
+  ])
 
   const companyId = profile?.company_id as string
   const now = new Date()
   const year  = now.getFullYear()
   const month = now.getMonth() + 1
 
-  // Período actual
-  const { data: period } = await supabase
-    .schema('conta').from('periods')
-    .select('*')
-    .eq('company_id', companyId)
-    .eq('year', year)
-    .eq('month', month)
-    .maybeSingle()
-
-  // Conteos en paralelo
-  const [journalRes, taxRes, pendingRes, validacionesRes] = await Promise.all([
+  // Período + conteos todos en paralelo (period antes era secuencial)
+  const [periodRes, journalRes, taxRes, pendingRes, validacionesRes] = await Promise.all([
+    supabase
+      .schema('conta').from('periods')
+      .select('*')
+      .eq('company_id', companyId)
+      .eq('year', year)
+      .eq('month', month)
+      .maybeSingle(),
     supabase.schema('conta').from('journal_entries')
       .select('*', { count: 'exact', head: true })
       .eq('company_id', companyId)
@@ -44,6 +41,7 @@ export default async function DashboardPage() {
       .eq('status', 'pendiente'),
   ])
 
+  const period = periodRes.data
   const stats = {
     journalEntries:   journalRes.count ?? 0,
     taxDocuments:     taxRes.count ?? 0,

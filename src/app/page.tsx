@@ -1,7 +1,14 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { HomeHeader } from './_components/HomeHeader'
 import { hasAnyPermission, hasModuleAccess, PERMISSIONS } from '@/lib/permissions'
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: 'https://erp.mistercontador.cl',
+  },
+}
 
 export default async function HomePage() {
   const supabase = await createClient()

@@ -23,9 +23,12 @@ export default async function LibroDiarioPage({
 }) {
   const params = await searchParams
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase
-    .from('user_profiles').select('company_id').eq('id', user!.id).single()
+
+  // getUser + profile en paralelo para evitar cascada
+  const [{ data: { user } }, { data: profile }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from('user_profiles').select('company_id').single(),
+  ])
 
   const companyId = profile?.company_id as string
   const now   = new Date()

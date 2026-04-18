@@ -55,13 +55,17 @@ export function UsuariosClient({ members, roles, currentUserId }: Props) {
     setInviteError('')
     setInviteSuccess(false)
     startTransition(async () => {
-      const res = await inviteUserByEmail(inviteEmail, inviteRole)
-      if (!res.ok) {
-        setInviteError(res.error)
-      } else {
-        setInviteEmail('')
-        setInviteSuccess(true)
-        setShowInvite(false)
+      try {
+        const res = await inviteUserByEmail(inviteEmail, inviteRole)
+        if (!res.ok) {
+          setInviteError(res.error)
+        } else {
+          setInviteEmail('')
+          setInviteSuccess(true)
+          setShowInvite(false)
+        }
+      } catch (err) {
+        setInviteError(err instanceof Error ? err.message : 'Error inesperado al enviar la invitación')
       }
     })
   }
