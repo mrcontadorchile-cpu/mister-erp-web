@@ -158,9 +158,8 @@ export async function GET(request: NextRequest) {
       if (type === 'recovery') {
         return NextResponse.redirect(`${origin}/auth/nueva-contrasena`)
       }
-      if (invitedCompanyId && isNewUser) {
-        return NextResponse.redirect(`${origin}/auth/configurar-cuenta`)
-      }
+      // Usuarios invitados: ya crearon cuenta en /auth/aceptar-invitacion,
+      // no necesitan pasar por configurar-cuenta (ya tienen contraseña y nombre)
       if (invitedCompanyId) {
         return NextResponse.redirect(`${origin}/`)
       }

@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { UsuariosClient } from './UsuariosClient'
 
 export default async function UsuariosPage() {
@@ -13,19 +14,27 @@ export default async function UsuariosPage() {
 
   const companyId = profile?.company_id as string
 
-  // Use SECURITY DEFINER functions to avoid RLS circular dependency
-  const { data: membersRaw } = await supabase
-    .rpc('get_company_members', { p_company_id: companyId })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = createAdminClient() as any
 
-  const { data: rolesRaw } = await supabase
-    .rpc('get_company_roles', { p_company_id: companyId })
+  const [membersResult, rolesResult, pendingResult] = await Promise.all([
+    supabase.rpc('get_company_members', { p_company_id: companyId }),
+    supabase.rpc('get_company_roles',   { p_company_id: companyId }),
+    // Invitaciones enviadas aún no aceptadas para esta empresa
+    admin
+      .from('user_invitations')
+      .select('id, email, token, created_at, expires_at')
+      .eq('company_id', companyId)
+      .is('accepted_at', null)
+      .order('created_at', { ascending: false }),
+  ])
 
   type MemberRow = {
     membership_id: string; user_id: string; status: string; created_at: string
     full_name: string; role_id: string; role_name: string; role_perms: string[]
   }
 
-  const members = ((membersRaw ?? []) as MemberRow[]).map(m => ({
+  const members = ((membersResult.data ?? []) as MemberRow[]).map(m => ({
     id: m.membership_id,
     user_id: m.user_id,
     status: m.status,
@@ -38,11 +47,14 @@ export default async function UsuariosPage() {
   }))
 
   type RoleRow = { id: string; name: string; is_system: boolean }
-  const roleList = ((rolesRaw ?? []) as RoleRow[]).map(r => ({
+  const roleList = ((rolesResult.data ?? []) as RoleRow[]).map(r => ({
     id: r.id,
     name: r.name,
     is_system: r.is_system,
   }))
+
+  type PendingRow = { id: string; email: string; token: string; created_at: string; expires_at: string }
+  const pendingInvitations: PendingRow[] = (pendingResult.data ?? []) as PendingRow[]
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -56,6 +68,7 @@ export default async function UsuariosPage() {
         members={members}
         roles={roleList}
         currentUserId={user!.id}
+        pendingInvitations={pendingInvitations}
       />
     </div>
   )

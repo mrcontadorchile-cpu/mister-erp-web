@@ -122,6 +122,76 @@ export async function inviteUserByEmail(email: string, roleId: string): Promise<
   }
 }
 
+export async function resendInvitation(invitationId: string): Promise<ActionResult> {
+  try {
+    const ctx = await getContext()
+    if (!ctx) return { ok: false, error: 'No autenticado' }
+
+    const resendKey = process.env.RESEND_API_KEY
+    if (!resendKey) return { ok: false, error: 'RESEND_API_KEY no configurada' }
+
+    const admin = createAdminClient()
+    const resend = new Resend(resendKey)
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://erp.mistercontador.cl'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = admin as any
+
+    // Leer la invitación y verificar que pertenece a la empresa del admin
+    const { data: inv, error: readErr } = await db
+      .from('user_invitations')
+      .select('id, email, company_id, token')
+      .eq('id', invitationId)
+      .eq('company_id', ctx.companyId)
+      .is('accepted_at', null)
+      .single() as { data: { id: string; email: string; company_id: string; token: string } | null; error: unknown }
+
+    if (readErr || !inv) return { ok: false, error: 'Invitación no encontrada' }
+
+    // Extender la vigencia 7 días más
+    const newExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    await db.from('user_invitations').update({ expires_at: newExpiry }).eq('id', inv.id)
+
+    // Nombre de la empresa para el email
+    const { data: companyData } = await ctx.supabase
+      .from('companies').select('name').eq('id', ctx.companyId).single()
+    const companyName = (companyData as { name: string } | null)?.name ?? 'tu empresa'
+
+    const acceptUrl = `${appUrl}/auth/aceptar-invitacion?token=${inv.token}`
+    await resend.emails.send({
+      from:    'Mister Contabilidad <no-reply@mistercontador.cl>',
+      to:      inv.email,
+      subject: `Recordatorio: Invitación a ${companyName} — ERP Mister Group`,
+      html:    buildInviteEmail(companyName, acceptUrl),
+    })
+
+    revalidatePath('/sistema/usuarios')
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error inesperado' }
+  }
+}
+
+export async function cancelInvitation(invitationId: string): Promise<ActionResult> {
+  try {
+    const ctx = await getContext()
+    if (!ctx) return { ok: false, error: 'No autenticado' }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = createAdminClient() as any
+    const { error } = await db
+      .from('user_invitations')
+      .delete()
+      .eq('id', invitationId)
+      .eq('company_id', ctx.companyId)
+
+    if (error) return { ok: false, error: error.message }
+    revalidatePath('/sistema/usuarios')
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Error inesperado' }
+  }
+}
+
 // ── Email templates ───────────────────────────────────────────────────────────
 
 function emailShell(body: string) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { changeUserRole, changeUserStatus, inviteUserByEmail } from './actions'
+import { changeUserRole, changeUserStatus, inviteUserByEmail, resendInvitation, cancelInvitation } from './actions'
 
 interface Member {
   id: string
@@ -21,13 +21,22 @@ interface Role {
   is_system: boolean
 }
 
+interface PendingInvitation {
+  id: string
+  email: string
+  token: string
+  created_at: string
+  expires_at: string
+}
+
 interface Props {
   members: Member[]
   roles: Role[]
   currentUserId: string
+  pendingInvitations: PendingInvitation[]
 }
 
-export function UsuariosClient({ members, roles, currentUserId }: Props) {
+export function UsuariosClient({ members, roles, currentUserId, pendingInvitations }: Props) {
   const [isPending, startTransition] = useTransition()
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState(roles[0]?.id ?? '')
@@ -139,7 +148,84 @@ export function UsuariosClient({ members, roles, currentUserId }: Props) {
 
       {inviteSuccess && (
         <div className="card p-3 border-success/30 bg-success/5 text-success text-sm">
-          Usuario agregado correctamente.
+          Invitación enviada correctamente.
+        </div>
+      )}
+
+      {/* Pending invitations */}
+      {pendingInvitations.length > 0 && (
+        <div className="card overflow-hidden">
+          <div className="px-4 py-3 border-b border-border">
+            <p className="text-xs font-semibold text-text-disabled uppercase tracking-wider">
+              Invitaciones pendientes ({pendingInvitations.length})
+            </p>
+          </div>
+          <table className="w-full text-sm">
+            <tbody>
+              {pendingInvitations.map(inv => {
+                const expired = new Date(inv.expires_at) < new Date()
+                return (
+                  <tr key={inv.id} className="table-row text-xs">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-surface-high flex items-center justify-center shrink-0">
+                          <span className="text-xs font-semibold text-text-disabled">?</span>
+                        </div>
+                        <p className="font-medium text-text-secondary">{inv.email}</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-text-disabled">
+                      Invitado {new Date(inv.created_at).toLocaleDateString('es-CL')}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`badge text-[10px] ${
+                        expired
+                          ? 'bg-error/10 text-error'
+                          : 'bg-warning/10 text-warning'
+                      }`}>
+                        {expired ? 'Expirado' : 'Pendiente'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right flex items-center justify-end gap-2">
+                      <button
+                        disabled={isPending}
+                        onClick={() => {
+                          startTransition(async () => {
+                            try {
+                              const res = await resendInvitation(inv.id)
+                              if (!res.ok) alert(res.error)
+                            } catch (e) {
+                              alert(e instanceof Error ? e.message : 'Error')
+                            }
+                          })
+                        }}
+                        className="text-xs px-2 py-1 rounded text-primary hover:bg-primary/10 transition-colors"
+                      >
+                        Re-invitar
+                      </button>
+                      <button
+                        disabled={isPending}
+                        onClick={() => {
+                          if (!confirm(`¿Cancelar la invitación de ${inv.email}?`)) return
+                          startTransition(async () => {
+                            try {
+                              const res = await cancelInvitation(inv.id)
+                              if (!res.ok) alert(res.error)
+                            } catch (e) {
+                              alert(e instanceof Error ? e.message : 'Error')
+                            }
+                          })
+                        }}
+                        className="text-xs px-2 py-1 rounded text-error hover:bg-error/10 transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
