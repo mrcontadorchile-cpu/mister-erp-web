@@ -71,6 +71,10 @@ function AceptarInvitacionContent() {
       email,
       password,
       options: {
+        // El token viaja en user_metadata (persiste en DB) Y en la URL (redundancia).
+        // Así aunque Supabase recorte los query params del emailRedirectTo,
+        // el callback siempre puede leer el token desde user_metadata.
+        data: { invite_token: token },
         emailRedirectTo: `${origin}/auth/callback?type=invite&token=${token}`,
       },
     })

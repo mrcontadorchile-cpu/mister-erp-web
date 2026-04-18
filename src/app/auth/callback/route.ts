@@ -5,11 +5,11 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
-  const code       = searchParams.get('code')
-  const type       = searchParams.get('type')       // 'recovery' | 'invite' | undefined
-  const companyId  = searchParams.get('company_id') // legacy invite param
-  const invToken   = searchParams.get('token')      // new invite token
-  const next       = searchParams.get('next') ?? '/'
+  const code      = searchParams.get('code')
+  const type      = searchParams.get('type')       // 'recovery' | 'invite' | undefined
+  const companyId = searchParams.get('company_id') // legacy invite param
+  const urlToken  = searchParams.get('token')      // token en la URL (Google OAuth)
+  const next      = searchParams.get('next') ?? '/'
 
   if (code) {
     const cookieStore = await cookies()
@@ -49,9 +49,13 @@ export async function GET(request: NextRequest) {
       let invitedCompanyId: string | null = null
       let isNewUser = false
 
+      // El token puede llegar por dos vías:
+      // 1. URL query param: Google OAuth siempre lo preserva
+      // 2. user_metadata.invite_token: guardado en signUp(), sobrevive aunque
+      //    Supabase recorte los query params del emailRedirectTo
+      const invToken = urlToken ?? (data.user.user_metadata?.invite_token as string | undefined) ?? null
+
       // ── Flujo con token (Google OAuth + email/contraseña) ───────────────
-      // Busca la invitación directamente por token — más confiable que email
-      // porque el token viaja en la URL y no depende de coincidencia de email.
       if (invToken) {
         const { data: inv } = await db
           .from('user_invitations')
