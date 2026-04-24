@@ -8,8 +8,14 @@ export default async function PresupuestosPage() {
   const { data: { user } } = await supabase.auth.getUser()
   const { data: profile } = await supabase
     .from('user_profiles').select('company_id').eq('id', user!.id).single()
+  const companyId = profile?.company_id as string
 
-  const budgets = await listBudgets()
+  const [budgets, permsData] = await Promise.all([
+    listBudgets(),
+    supabase.rpc('get_user_permissions', { p_user_id: user!.id, p_company_id: companyId }),
+  ])
+  const perms: string[] = (permsData.data as string[] | null) ?? []
+  const canApprove = perms.includes('*') || perms.includes('gestion.approve')
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto">
@@ -28,7 +34,7 @@ export default async function PresupuestosPage() {
         </Link>
       </div>
 
-      <PresupuestosClient budgets={budgets} />
+      <PresupuestosClient budgets={budgets} userId={user!.id} canApprove={canApprove} />
     </div>
   )
 }

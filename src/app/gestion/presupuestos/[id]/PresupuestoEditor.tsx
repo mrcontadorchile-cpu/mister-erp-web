@@ -5,17 +5,29 @@ import Link from 'next/link'
 import type { Account, CostCenter } from '@/types/database'
 import {
   upsertBudgetLines, updateBudgetMeta, updateBudgetStatus, deleteBudget,
+  submitForApproval,
   type Budget, type BudgetLine,
 } from '../actions'
 import { useRouter } from 'next/navigation'
 
-const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+const MONTHS_ES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+function buildMonthLabels(budgetType: string, startMonth: number, fiscalYear: number): string[] {
+  if (budgetType !== 'rolling') return MONTHS_ES
+  return Array.from({ length: 12 }, (_, i) => {
+    const absMonth = (startMonth - 1 + i) % 12 + 1
+    const yearOffset = Math.floor((startMonth - 1 + i) / 12)
+    const yr = (fiscalYear + yearOffset).toString().slice(-2)
+    return `${MONTHS_ES[absMonth - 1]}'${yr}`
+  })
+}
 
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  draft:    { label: 'Borrador',  color: 'text-text-disabled bg-surface-high' },
-  approved: { label: 'Aprobado', color: 'text-info bg-info/10' },
-  active:   { label: 'Activo',   color: 'text-success bg-success/10' },
-  closed:   { label: 'Cerrado',  color: 'text-text-disabled bg-surface-high' },
+  draft:            { label: 'Borrador',    color: 'text-text-disabled bg-surface-high' },
+  pending_approval: { label: 'En revisión', color: 'text-warning bg-warning/10' },
+  approved:         { label: 'Aprobado',    color: 'text-info bg-info/10' },
+  active:           { label: 'Activo',      color: 'text-success bg-success/10' },
+  closed:           { label: 'Cerrado',     color: 'text-text-disabled bg-surface-high' },
 }
 
 const ACC_TYPES: Record<string, { label: string; color: string }> = {
@@ -36,6 +48,8 @@ interface Props {
   budgetLines: BudgetLine[]
   accounts:    Pick<Account, 'id' | 'code' | 'name' | 'type' | 'nature'>[]
   costCenters: Pick<CostCenter, 'id' | 'code' | 'name'>[]
+  userId:      string
+  canApprove:  boolean
 }
 
 function parseNum(v: string) {
@@ -62,7 +76,7 @@ function toRows(lines: BudgetLine[]): LineRow[] {
   return Array.from(map.values())
 }
 
-export function PresupuestoEditor({ budget: initial, budgetLines, accounts, costCenters }: Props) {
+export function PresupuestoEditor({ budget: initial, budgetLines, accounts, costCenters, userId, canApprove }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [budget, setBudget] = useState<Budget>(initial)
@@ -74,7 +88,10 @@ export function PresupuestoEditor({ budget: initial, budgetLines, accounts, cost
   const [metaName, setMetaName] = useState(initial.name)
   const [metaDesc, setMetaDesc] = useState(initial.description ?? '')
   const [searchAcc, setSearchAcc] = useState('')
-  const isReadonly = budget.status === 'closed'
+  const isReadonly   = budget.status === 'closed'
+  const isCreator    = budget.created_by === userId
+  const isApprovable = canApprove && (!budget.created_by || budget.created_by !== userId)
+  const monthLabels  = buildMonthLabels(budget.budget_type, budget.start_month ?? 1, budget.fiscal_year)
 
   function flash(ok: boolean, msg?: string) {
     if (ok) { setSaved(true); setTimeout(() => setSaved(false), 2500) }
@@ -130,12 +147,31 @@ export function PresupuestoEditor({ budget: initial, budgetLines, accounts, cost
     })
   }
 
+  function handleSubmitApproval() {
+    if (!confirm('¿Enviar este presupuesto para aprobación?')) return
+    startTransition(async () => {
+      const res = await submitForApproval(budget.id)
+      if (res.ok) setBudget(prev => ({ ...prev, status: 'pending_approval' }))
+      else flash(false, res.error)
+    })
+  }
+
   function handleStatus(status: Budget['status']) {
     startTransition(async () => {
-      const res = await updateBudgetStatus(budget.id, status)
+      const res = await updateBudgetStatus(budget.id, status as any)
       if (res.ok) setBudget(prev => ({ ...prev, status }))
       else flash(false, res.error)
     })
+  }
+
+  function distributeRow(key: string) {
+    const row = lines.find(l => l.key === key)
+    if (!row) return
+    const t = total(row.amounts)
+    if (t === 0) return
+    const monthly = Math.round(t / 12)
+    setLines(prev => prev.map(l => l.key === key ? { ...l, amounts: Array(12).fill(monthly) } : l))
+    setDirty(true)
   }
 
   function handleDelete() {
@@ -214,9 +250,36 @@ export function PresupuestoEditor({ budget: initial, budgetLines, accounts, cost
 
         {/* Acciones estado */}
         <div className="flex items-center gap-2 shrink-0">
-          {budget.status === 'draft'    && <button onClick={() => handleStatus('approved')} disabled={isPending} className="btn-ghost text-xs border border-info/40 text-info px-3 py-1.5">Aprobar</button>}
-          {budget.status === 'approved' && <button onClick={() => handleStatus('active')}   disabled={isPending} className="btn-ghost text-xs border border-success/40 text-success px-3 py-1.5">Activar</button>}
-          {budget.status === 'active'   && <button onClick={() => handleStatus('closed')}   disabled={isPending} className="btn-ghost text-xs border border-border text-text-disabled px-3 py-1.5">Cerrar</button>}
+          {/* Borrador: creador envía a revisión */}
+          {budget.status === 'draft' && isCreator && (
+            <button onClick={handleSubmitApproval} disabled={isPending} className="btn-ghost text-xs border border-warning/40 text-warning px-3 py-1.5">
+              Enviar a aprobación
+            </button>
+          )}
+          {/* Borrador: aprobador puede aprobar directo (si no es creador) */}
+          {budget.status === 'draft' && isApprovable && !isCreator && (
+            <button onClick={() => handleStatus('approved')} disabled={isPending} className="btn-ghost text-xs border border-info/40 text-info px-3 py-1.5">
+              Aprobar
+            </button>
+          )}
+          {/* En revisión: aprobador aprueba */}
+          {budget.status === 'pending_approval' && isApprovable && (
+            <button onClick={() => handleStatus('approved')} disabled={isPending} className="btn-ghost text-xs border border-info/40 text-info px-3 py-1.5">
+              ✓ Aprobar
+            </button>
+          )}
+          {/* En revisión: creador retira */}
+          {budget.status === 'pending_approval' && isCreator && (
+            <button onClick={() => handleStatus('draft')} disabled={isPending} className="btn-ghost text-xs border border-border text-text-disabled px-3 py-1.5">
+              Retirar
+            </button>
+          )}
+          {budget.status === 'approved' && canApprove && (
+            <button onClick={() => handleStatus('active')} disabled={isPending} className="btn-ghost text-xs border border-success/40 text-success px-3 py-1.5">Activar</button>
+          )}
+          {budget.status === 'active' && canApprove && (
+            <button onClick={() => handleStatus('closed')} disabled={isPending} className="btn-ghost text-xs border border-border text-text-disabled px-3 py-1.5">Cerrar</button>
+          )}
           <Link href={`/gestion/control?budget_id=${budget.id}`}
             className="btn-ghost text-xs border border-border px-3 py-1.5 flex items-center gap-1">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -307,8 +370,16 @@ export function PresupuestoEditor({ budget: initial, budgetLines, accounts, cost
                               <span className="text-xs font-medium text-text-primary truncate">{acc?.name}</span>
                               {cc && <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded shrink-0">{cc.code}</span>}
                             </div>
-                            <div className="flex items-center gap-3 shrink-0">
+                            <div className="flex items-center gap-2 shrink-0">
                               <span className="text-xs font-mono font-bold">{fmtCLP(lineTotal)}</span>
+                              {!isReadonly && lineTotal > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => distributeRow(l.key)}
+                                  className="text-[10px] text-text-disabled hover:text-primary border border-border hover:border-primary/40 px-1.5 py-0.5 rounded transition-colors"
+                                  title="Distribuir uniformemente en 12 meses"
+                                >÷12</button>
+                              )}
                               {!isReadonly && (
                                 <button type="button" onClick={() => removeLine(l.key)} className="text-text-disabled hover:text-error transition-colors">
                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -319,7 +390,7 @@ export function PresupuestoEditor({ budget: initial, budgetLines, accounts, cost
                             </div>
                           </div>
                           <div className="grid grid-cols-6 md:grid-cols-12 gap-0 divide-x divide-border">
-                            {MONTHS.map((mes, idx) => (
+                            {monthLabels.map((mes, idx) => (
                               <div key={mes} className="flex flex-col p-1.5">
                                 <span className="text-[9px] text-text-disabled text-center mb-1">{mes}</span>
                                 {isReadonly ? (

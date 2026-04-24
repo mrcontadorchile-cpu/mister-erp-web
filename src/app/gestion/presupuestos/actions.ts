@@ -21,23 +21,30 @@ export interface BudgetLine {
 }
 
 export interface Budget {
-  id:          string
-  name:        string
-  description: string | null
-  fiscal_year: number
-  status:      'draft' | 'approved' | 'active' | 'closed'
-  created_at:  string
-  updated_at:  string
+  id:           string
+  name:         string
+  description:  string | null
+  fiscal_year:  number
+  budget_type:  'annual' | 'rolling'
+  start_month:  number
+  status:       'draft' | 'pending_approval' | 'approved' | 'active' | 'closed'
+  created_by:   string | null
+  submitted_by: string | null
+  submitted_at: string | null
+  created_at:   string
+  updated_at:   string
 }
 
 // ── Listar ───────────────────────────────────────────────────
+
+const BUDGET_SELECT = 'id, name, description, fiscal_year, budget_type, start_month, status, created_by, submitted_by, submitted_at, created_at, updated_at'
 
 export async function listBudgets(): Promise<Budget[]> {
   const ctx = await getCtx()
   if (!ctx) return []
   const { data } = await ctx.supabase
     .schema('conta').from('budgets')
-    .select('id, name, description, fiscal_year, status, created_at, updated_at')
+    .select(BUDGET_SELECT)
     .eq('company_id', ctx.companyId)
     .order('fiscal_year', { ascending: false })
     .order('created_at', { ascending: false })
@@ -51,7 +58,7 @@ export async function getBudget(id: string) {
   if (!ctx) return null
   const { data } = await ctx.supabase
     .schema('conta').from('budgets')
-    .select('id, name, description, fiscal_year, status, created_at, updated_at')
+    .select(BUDGET_SELECT)
     .eq('id', id)
     .eq('company_id', ctx.companyId)
     .single()
@@ -72,10 +79,12 @@ export async function getBudgetLines(budgetId: string): Promise<BudgetLine[]> {
 // ── Crear ─────────────────────────────────────────────────────
 
 export async function createBudget(
-  name:        string,
-  fiscal_year: number,
-  description: string,
-  lines:       BudgetLine[],
+  name:         string,
+  fiscal_year:  number,
+  description:  string,
+  lines:        BudgetLine[],
+  budget_type:  'annual' | 'rolling' = 'annual',
+  start_month:  number = 1,
 ): Promise<{ ok: boolean; id?: string; error?: string }> {
   const ctx = await getCtx()
   if (!ctx) return { ok: false, error: 'No autenticado' }
@@ -89,6 +98,8 @@ export async function createBudget(
       name:        name.trim(),
       description: description.trim() || null,
       fiscal_year,
+      budget_type,
+      start_month,
       status:      'draft',
     })
     .select('id')
@@ -165,7 +176,42 @@ export async function upsertBudgetLines(
   return { ok: true }
 }
 
-// ── Cambiar estado ────────────────────────────────────────────
+// ── Enviar a aprobación (creador) ─────────────────────────────
+
+export async function submitForApproval(
+  budgetId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const ctx = await getCtx()
+  if (!ctx) return { ok: false, error: 'No autenticado' }
+
+  // Solo el creador puede enviar a aprobación
+  const { data: budget } = await ctx.supabase
+    .schema('conta').from('budgets')
+    .select('id, status, created_by')
+    .eq('id', budgetId)
+    .eq('company_id', ctx.companyId)
+    .single()
+
+  if (!budget) return { ok: false, error: 'Presupuesto no encontrado' }
+  if (budget.status !== 'draft') return { ok: false, error: 'Solo se pueden enviar presupuestos en borrador' }
+
+  const { error } = await ctx.supabase
+    .schema('conta').from('budgets')
+    .update({
+      status:       'pending_approval',
+      submitted_by: ctx.userId,
+      submitted_at: new Date().toISOString(),
+    })
+    .eq('id', budgetId)
+    .eq('company_id', ctx.companyId)
+
+  if (error) return { ok: false, error: error.message }
+  revalidatePath('/gestion/presupuestos')
+  revalidatePath(`/gestion/presupuestos/${budgetId}`)
+  return { ok: true }
+}
+
+// ── Cambiar estado (requiere permiso gestion.approve para aprobar) ──
 
 export async function updateBudgetStatus(
   budgetId: string,
@@ -173,6 +219,30 @@ export async function updateBudgetStatus(
 ): Promise<{ ok: boolean; error?: string }> {
   const ctx = await getCtx()
   if (!ctx) return { ok: false, error: 'No autenticado' }
+
+  // Para aprobar: verificar que el usuario tenga gestion.approve y no sea el creador
+  if (status === 'approved') {
+    const { data: budget } = await ctx.supabase
+      .schema('conta').from('budgets')
+      .select('created_by, submitted_by, status')
+      .eq('id', budgetId)
+      .eq('company_id', ctx.companyId)
+      .single()
+
+    if (!budget) return { ok: false, error: 'Presupuesto no encontrado' }
+    if (budget.status !== 'pending_approval')
+      return { ok: false, error: 'El presupuesto debe estar en revisión para ser aprobado' }
+
+    const { data: permsData } = await ctx.supabase
+      .rpc('get_user_permissions', { p_user_id: ctx.userId, p_company_id: ctx.companyId })
+    const perms = (permsData as string[] | null) ?? []
+    const canApprove = perms.includes('*') || perms.includes('gestion.approve')
+    if (!canApprove) return { ok: false, error: 'No tienes permiso para aprobar presupuestos' }
+
+    // No puede aprobar su propio presupuesto (a menos que sea superadmin con '*')
+    if (!perms.includes('*') && budget.created_by === ctx.userId)
+      return { ok: false, error: 'No puedes aprobar un presupuesto que creaste tú mismo' }
+  }
 
   const patch: Record<string, unknown> = { status }
   if (status === 'approved') {
