@@ -44,7 +44,7 @@ export default async function EmpleadoPage({ params }: { params: Promise<{ id: s
   const actualizarConId = actualizarEmpleado.bind(null, id)
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="p-4 md:p-8 max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-8">
         <Link href="/remuneraciones/empleados" className="text-text-disabled hover:text-text-primary">
           ← Empleados
@@ -63,7 +63,7 @@ export default async function EmpleadoPage({ params }: { params: Promise<{ id: s
       </div>
 
       {/* Resumen */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="card p-4">
           <p className="text-xs text-text-disabled mb-1">Sueldo Base</p>
           <p className="text-lg font-bold text-text-primary">{formatCLP(emp.sueldo_base)}</p>
@@ -89,7 +89,7 @@ export default async function EmpleadoPage({ params }: { params: Promise<{ id: s
           <h2 className="text-sm font-semibold text-text-primary mb-5 pb-3 border-b border-border">
             Datos Personales
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">RUT</label>
               <input value={emp.rut} disabled className="input opacity-50 cursor-not-allowed" />
@@ -139,7 +139,7 @@ export default async function EmpleadoPage({ params }: { params: Promise<{ id: s
           <h2 className="text-sm font-semibold text-text-primary mb-5 pb-3 border-b border-border">
             Datos Laborales
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">Cargo *</label>
               <input name="cargo" defaultValue={emp.cargo} required className="input" />
@@ -185,7 +185,7 @@ export default async function EmpleadoPage({ params }: { params: Promise<{ id: s
           <h2 className="text-sm font-semibold text-text-primary mb-5 pb-3 border-b border-border">
             Remuneración y Previsión
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">Sueldo Base (CLP) *</label>
               <input name="sueldo_base" type="number" defaultValue={emp.sueldo_base} required min={0} step={1000} className="input" />

@@ -34,6 +34,11 @@ export const PERMISSIONS = {
   REMU_PERIODOS_MANAGE:      'remu.periodos.manage',
   REMU_CONFIG_VIEW:          'remu.config.view',
   REMU_CONFIG_MANAGE:        'remu.config.manage',
+  // ── Gestión (Presupuestos) ───────────────────────────────
+  GESTION_VIEW:    'gestion.view',
+  GESTION_CREATE:  'gestion.create',
+  GESTION_EDIT:    'gestion.edit',
+  GESTION_APPROVE: 'gestion.approve',
   // ── Sistema (RBAC) ───────────────────────────────────────
   SISTEMA_USUARIOS: 'sistema.usuarios',
   SISTEMA_ROLES:    'sistema.roles',
@@ -175,6 +180,22 @@ export const MODULE_PERMISSIONS = [
         permissions: [
           { key: PERMISSIONS.REMU_CONFIG_VIEW,   label: 'Ver configuración' },
           { key: PERMISSIONS.REMU_CONFIG_MANAGE, label: 'Editar configuración' },
+        ],
+      },
+    ],
+  },
+  {
+    module: 'gestion',
+    label: 'Gestión',
+    description: 'Presupuestos, control presupuestario y seguimiento financiero',
+    groups: [
+      {
+        group: 'Presupuestos',
+        permissions: [
+          { key: PERMISSIONS.GESTION_VIEW,    label: 'Ver presupuestos y control' },
+          { key: PERMISSIONS.GESTION_CREATE,  label: 'Crear presupuestos' },
+          { key: PERMISSIONS.GESTION_EDIT,    label: 'Editar líneas presupuestarias' },
+          { key: PERMISSIONS.GESTION_APPROVE, label: 'Aprobar y activar presupuestos' },
         ],
       },
     ],

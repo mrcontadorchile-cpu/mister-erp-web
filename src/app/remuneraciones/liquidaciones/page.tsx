@@ -35,7 +35,7 @@ export default async function LiquidacionesPage() {
   )
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-4 md:p-8 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Liquidaciones</h1>
@@ -54,8 +54,8 @@ export default async function LiquidacionesPage() {
           </Link>
         </div>
       ) : (
-        <div className="card overflow-hidden">
-          <table className="w-full">
+        <div className="card overflow-hidden overflow-x-auto">
+          <table className="w-full min-w-[480px]">
             <thead>
               <tr className="table-header">
                 <th className="px-4 py-3 text-left">Período</th>

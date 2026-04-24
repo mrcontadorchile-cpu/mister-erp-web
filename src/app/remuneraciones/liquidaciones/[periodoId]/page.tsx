@@ -57,7 +57,7 @@ export default async function LiquidacionesPeriodoPage({
   const periodoCerrado = periodo.estado === 'cerrado'
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <Link href="/remuneraciones/liquidaciones" className="text-text-disabled hover:text-text-primary">

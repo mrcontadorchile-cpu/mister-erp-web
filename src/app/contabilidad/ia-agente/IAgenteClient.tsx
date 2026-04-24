@@ -12,23 +12,45 @@ interface Message {
   createdBorrador?: boolean
 }
 
+const WELCOME_MESSAGE: Message = {
+  role: 'assistant',
+  content: '¡Hola! Soy tu asistente contable. Puedo ayudarte a crear asientos de ajuste, gastos personales de socios, anticipos y más. ¿Qué necesitas registrar hoy?',
+}
+
 // ── Chat ─────────────────────────────────────────────────────
 
-function ChatTab() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: '¡Hola! Soy tu asistente contable. Puedo ayudarte a crear asientos de ajuste, gastos personales de socios, anticipos y más. ¿Qué necesitas registrar hoy?',
-    },
-  ])
+function ChatTab({ companyId }: { companyId: string }) {
+  const storageKey = `ia_chat_${companyId}`
+
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window === 'undefined') return [WELCOME_MESSAGE]
+    try {
+      const saved = localStorage.getItem(storageKey)
+      const parsed = saved ? JSON.parse(saved) : null
+      return parsed?.length ? parsed : [WELCOME_MESSAGE]
+    } catch {
+      return [WELCOME_MESSAGE]
+    }
+  })
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  // Persistir en localStorage cada vez que cambian los mensajes
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, JSON.stringify(messages)) } catch {}
+  }, [messages, storageKey])
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  function handleNuevaConversacion() {
+    if (!confirm('¿Iniciar una nueva conversación? Se borrará el historial actual.')) return
+    setMessages([WELCOME_MESSAGE])
+    try { localStorage.removeItem(storageKey) } catch {}
+  }
 
   async function sendMessage() {
     const text = input.trim()
@@ -76,6 +98,21 @@ function ChatTab() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-220px)] min-h-[400px]">
+      {/* Barra superior del chat */}
+      <div className="flex items-center justify-between pb-3 border-b border-border mb-1">
+        <p className="text-xs text-text-disabled">
+          {messages.length - 1 > 0
+            ? `${messages.length - 1} mensaje${messages.length - 1 > 1 ? 's' : ''} en esta conversación`
+            : 'Conversación nueva'}
+        </p>
+        <button
+          onClick={handleNuevaConversacion}
+          className="text-xs text-text-disabled hover:text-error transition-colors px-2 py-1 rounded hover:bg-error/10"
+        >
+          + Nueva conversación
+        </button>
+      </div>
+
       {/* Mensajes */}
       <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-1">
         {messages.map((msg, i) => (
@@ -322,7 +359,7 @@ function ConfigTab({ config }: { config: ConfiguracionAsistente | null }) {
 
 // ── Pantalla principal ────────────────────────────────────────
 
-export function IAgenteClient({ config }: { config: ConfiguracionAsistente | null }) {
+export function IAgenteClient({ config, companyId }: { config: ConfiguracionAsistente | null; companyId: string }) {
   const [tab, setTab] = useState<'chat' | 'config'>('chat')
 
   return (
@@ -355,7 +392,7 @@ export function IAgenteClient({ config }: { config: ConfiguracionAsistente | nul
         ))}
       </div>
 
-      {tab === 'chat' ? <ChatTab /> : <ConfigTab config={config} />}
+      {tab === 'chat' ? <ChatTab companyId={companyId} /> : <ConfigTab config={config} />}
     </div>
   )
 }

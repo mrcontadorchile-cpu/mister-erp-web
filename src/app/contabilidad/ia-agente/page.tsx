@@ -23,5 +23,5 @@ export default async function IAAgentePage() {
     .eq('company_id', companyId)
     .maybeSingle()
 
-  return <IAgenteClient config={config as ConfiguracionAsistente | null} />
+  return <IAgenteClient config={config as ConfiguracionAsistente | null} companyId={companyId} />
 }

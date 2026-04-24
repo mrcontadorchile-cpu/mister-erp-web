@@ -110,7 +110,7 @@ export default async function LibroRemuneracionesPage({
       ) : (
         <>
           {/* Resumen */}
-          <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div className="card p-4">
               <p className="text-xs text-text-disabled">Trabajadores</p>
               <p className="text-xl font-bold text-text-primary">{liquidaciones.length}</p>

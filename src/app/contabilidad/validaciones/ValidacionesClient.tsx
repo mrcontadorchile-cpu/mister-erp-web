@@ -59,12 +59,9 @@ function CorrectorModal({
     if (!debeCode || !haberCode) { setError('Debes seleccionar ambas cuentas.'); return }
     setError(null)
     startTransition(async () => {
-      try {
-        await corregirBorrador(borrador.id, debeCode, haberCode)
-        onClose()
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Error al corregir')
-      }
+      const result = await corregirBorrador(borrador.id, debeCode, haberCode)
+      if (!result.ok) { setError(result.error); return }
+      onClose()
     })
   }
 
@@ -164,12 +161,9 @@ function BorradorCard({
   function handleAprobar() {
     setError(null)
     startTransition(async () => {
-      try {
-        await aprobarBorrador(borrador.id)
-        setDone(true)
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Error al aprobar')
-      }
+      const result = await aprobarBorrador(borrador.id)
+      if (!result.ok) { setError(result.error); return }
+      setDone(true)
     })
   }
 
@@ -177,12 +171,9 @@ function BorradorCard({
     if (!confirm('¿Rechazar este documento? Quedará como "rechazado" y no se contabilizará.')) return
     setError(null)
     startTransition(async () => {
-      try {
-        await rechazarBorrador(borrador.id)
-        setDone(true)
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Error al rechazar')
-      }
+      const result = await rechazarBorrador(borrador.id)
+      if (!result.ok) { setError(result.error); return }
+      setDone(true)
     })
   }
 
@@ -223,24 +214,52 @@ function BorradorCard({
         </p>
 
         {/* Sugerencia IA */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-semibold text-text-disabled uppercase tracking-wider mb-1.5 flex items-center gap-2">
-              Sugerencia IA {confidenceBadge(borrador.ia_confidence)}
-            </p>
-            {borrador.ia_account_debe_code ? (
-              <div className="flex gap-2 flex-wrap">
-                <span className="font-mono text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                  DEBE {borrador.ia_account_debe_code}
-                </span>
-                <span className="font-mono text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                  HABER {borrador.ia_account_haber_code}
-                </span>
-              </div>
-            ) : (
-              <p className="text-xs text-text-disabled italic">Sin sugerencia — el LLM no pudo inferir las cuentas</p>
-            )}
-          </div>
+        <div>
+          <p className="text-[10px] font-semibold text-text-disabled uppercase tracking-wider mb-1.5 flex items-center gap-2">
+            Sugerencia IA {confidenceBadge(borrador.ia_confidence)}
+          </p>
+          {/* Comprobante compuesto */}
+          {(borrador as any).lineas ? (
+            <div className="rounded-lg border border-border overflow-hidden text-xs">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-surface-high">
+                    <th className="text-left px-2 py-1.5 text-text-disabled font-medium w-14">Tipo</th>
+                    <th className="text-left px-2 py-1.5 text-text-disabled font-medium">Cuenta</th>
+                    <th className="text-left px-2 py-1.5 text-text-disabled font-medium hidden sm:table-cell">Auxiliar</th>
+                    <th className="text-right px-2 py-1.5 text-text-disabled font-medium">Monto</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {((borrador as any).lineas as Array<{tipo:string;account_code:string;amount:number;auxiliary_name?:string;glosa_linea?:string}>).map((l, i) => (
+                    <tr key={i}>
+                      <td className="px-2 py-1.5">
+                        <span className={`font-semibold font-mono ${l.tipo === 'debe' ? 'text-info' : 'text-warning'}`}>
+                          {l.tipo.toUpperCase()}
+                        </span>
+                      </td>
+                      <td className="px-2 py-1.5 font-mono text-primary">{l.account_code}</td>
+                      <td className="px-2 py-1.5 text-text-secondary hidden sm:table-cell">{l.auxiliary_name ?? '—'}</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums text-text-primary font-semibold">
+                        ${l.amount.toLocaleString('es-CL')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : borrador.ia_account_debe_code ? (
+            <div className="flex gap-2 flex-wrap">
+              <span className="font-mono text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                DEBE {borrador.ia_account_debe_code}
+              </span>
+              <span className="font-mono text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                HABER {borrador.ia_account_haber_code}
+              </span>
+            </div>
+          ) : (
+            <p className="text-xs text-text-disabled italic">Sin sugerencia — el LLM no pudo inferir las cuentas</p>
+          )}
         </div>
 
         {borrador.ia_razon && (
@@ -255,7 +274,7 @@ function BorradorCard({
         <div className="flex gap-2 pt-1">
           <button
             onClick={handleAprobar}
-            disabled={!borrador.ia_account_debe_code || pending}
+            disabled={!(borrador.ia_account_debe_code || (borrador as any).lineas) || pending}
             className="flex-1 py-2 text-xs font-semibold bg-success text-white rounded-lg hover:bg-success/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             ✓ Aprobar
@@ -285,7 +304,7 @@ export function ValidacionesClient({ pendientes, historial, cuentas }: Props) {
   const [tab, setTab] = useState<'pendientes' | 'historial'>('pendientes')
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3">

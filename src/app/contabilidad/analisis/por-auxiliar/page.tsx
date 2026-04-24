@@ -142,7 +142,7 @@ export default async function AnalisisPorAuxiliarPage({
     iso ? new Date(iso + 'T12:00:00').toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
 
       {/* Encabezado */}
       <div className="mb-6">
@@ -153,7 +153,7 @@ export default async function AnalisisPorAuxiliarPage({
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div className="card p-4">
           <p className="text-xs text-text-disabled mb-1">Auxiliares con documentos</p>
           <p className="font-bold text-xl font-mono">{allGroups.length}</p>
@@ -226,7 +226,7 @@ export default async function AnalisisPorAuxiliarPage({
         <div className="space-y-4">
 
           {/* Vista compacta (tabla resumen con expand) */}
-          <div className="card overflow-hidden">
+          <div className="card overflow-hidden overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="table-header text-xs">

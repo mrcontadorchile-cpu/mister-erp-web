@@ -1,14 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatNumber, monthName } from '@/lib/utils'
+import { DashboardCharts } from './DashboardCharts'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  // getUser + profile en paralelo para evitar cascada
-  const [{ data: { user } }, { data: profile }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.from('user_profiles').select('company_id, companies(name, rut)').single(),
-  ])
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: profile } = await supabase
+    .from('user_profiles').select('company_id, companies(name, rut)').eq('id', user!.id).single()
 
   const companyId = profile?.company_id as string
   const now = new Date()
@@ -51,8 +50,65 @@ export default async function DashboardPage() {
 
   const isClosed = period?.status === 'closed'
 
+  // ── Datos para gráficos: últimos 6 meses ─────────────────────────────────
+  const MES_SHORT = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+  // Generar los 6 pares (año, mes) anteriores al mes actual inclusive
+  const periods6: { year: number; month: number }[] = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(year, month - 1 - i, 1)
+    periods6.push({ year: d.getFullYear(), month: d.getMonth() + 1 })
+  }
+
+  // Traer balances de los últimos 6 meses en paralelo
+  const balanceResults = await Promise.all(
+    periods6.map(p =>
+      supabase.rpc('get_account_balances', {
+        p_company_id: companyId,
+        p_year:       p.year,
+        p_month_from: p.month,
+        p_month_to:   p.month,
+      })
+    )
+  )
+
+  const evolucion = periods6.map((p, i) => {
+    const rows = balanceResults[i].data ?? []
+    let ingresos = 0, gastos = 0
+    for (const b of rows as any[]) {
+      const bal = Number(b.balance)
+      if (b.type === 'INGRESO') ingresos += b.nature === 'DEUDOR' ? bal : -bal
+      if (b.type === 'EGRESO' || b.type === 'COSTO') gastos += b.nature === 'DEUDOR' ? bal : -bal
+    }
+    return {
+      mes:       MES_SHORT[p.month],
+      ingresos:  Math.max(0, ingresos),
+      gastos:    Math.max(0, gastos),
+      resultado: ingresos - gastos,
+    }
+  }).filter(p => p.ingresos > 0 || p.gastos > 0)
+
+  // Saldos de cuentas clave del mes actual
+  const cuentasClaveMap: { prefix: string; name: string; color: string }[] = [
+    { prefix: '1.1.1.', name: 'Caja y Bancos',        color: '#4CAF50' },
+    { prefix: '1.1.3.', name: 'Clientes',              color: '#2196F3' },
+    { prefix: '2.1.1.', name: 'Proveedores',           color: '#E53935' },
+    { prefix: '1.1.6.', name: 'IVA Crédito Fiscal',   color: '#9C27B0' },
+    { prefix: '2.1.3.', name: 'IVA Débito Fiscal',    color: '#FF9800' },
+  ]
+
+  const currentRows = (balanceResults[5].data ?? []) as any[]
+  const cuentasClave = cuentasClaveMap.map(c => {
+    const matching = currentRows.filter((b: any) => b.code.startsWith(c.prefix))
+    const saldo = matching.reduce((s: number, b: any) => {
+      const bal = Number(b.balance)
+      return s + (b.nature === 'DEUDOR' ? bal : -bal)
+    }, 0)
+    return { ...c, saldo }
+  }).filter(c => c.saldo !== 0)
+
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-4 md:p-8 max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-text-primary">Dashboard</h1>
@@ -79,7 +135,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         <KpiCard
           label="Asientos contables"
           value={formatNumber(stats.journalEntries)}
@@ -101,6 +157,13 @@ export default async function DashboardPage() {
       </div>
 
       {/* Accesos rápidos */}
+      {/* Gráficos */}
+      {(evolucion.length > 0 || cuentasClave.length > 0) && (
+        <div className="mb-10">
+          <DashboardCharts evolucion={evolucion} cuentasClave={cuentasClave} />
+        </div>
+      )}
+
       <SectionTitle title="Contabilidad" />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
         <NavCard href="/plan-cuentas"  label="Plan de Cuentas"  color="#4CAF50" />

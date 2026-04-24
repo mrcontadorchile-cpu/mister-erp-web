@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatCLP, monthName } from '@/lib/utils'
 import Link from 'next/link'
+import { LibroDiarioExport } from './LibroDiarioExport'
 
 const ENTRY_TYPE_LABEL: Record<string, string> = {
   MANUAL:            'Manual',
@@ -24,11 +25,9 @@ export default async function LibroDiarioPage({
   const params = await searchParams
   const supabase = await createClient()
 
-  // getUser + profile en paralelo para evitar cascada
-  const [{ data: { user } }, { data: profile }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.from('user_profiles').select('company_id').single(),
-  ])
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: profile } = await supabase
+    .from('user_profiles').select('company_id').eq('id', user!.id).single()
 
   const companyId = profile?.company_id as string
   const now   = new Date()
@@ -124,7 +123,7 @@ export default async function LibroDiarioPage({
   ].join('')
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Libro Diario</h1>
@@ -134,14 +133,23 @@ export default async function LibroDiarioPage({
               : `${monthName(month)} ${year} — ${entries.length} asientos`}
           </p>
         </div>
-        {!isClosed && !searching && (
-          <Link href="/contabilidad/libro-diario/nuevo" className="btn-primary flex items-center gap-2 text-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Nuevo Asiento
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          {entries.length > 0 && (
+            <LibroDiarioExport
+              entries={entries}
+              periodLabel={searching ? `Búsqueda: ${q}` : `${monthName(month)} ${year}`}
+              companyName=""
+            />
+          )}
+          {!isClosed && !searching && (
+            <Link href="/contabilidad/libro-diario/nuevo" className="btn-primary flex items-center gap-2 text-sm">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Nuevo Asiento
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Barra de filtros */}
@@ -245,8 +253,8 @@ export default async function LibroDiarioPage({
 
       {/* Tabla */}
       {entries.length > 0 && (
-        <div className="card overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="card overflow-hidden overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="table-header">
                 <th className="px-4 py-3 text-left w-16">

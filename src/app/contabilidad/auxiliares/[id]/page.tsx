@@ -99,7 +99,7 @@ export default async function CartolAuxiliarPage({
     iso ? new Date(iso + 'T12:00:00').toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
 
       {/* Encabezado */}
       <div className="flex items-start justify-between mb-6">

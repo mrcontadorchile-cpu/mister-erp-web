@@ -5,11 +5,13 @@ import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { hasPermission, hasAnyPermission, isAdmin, PERMISSIONS } from '@/lib/permissions'
+import { hasFeature } from '@/lib/features'
 import type { UserProfile } from '@/types/database'
 
 const nav = [
   {
     group: 'CONTABILIDAD',
+    feature: null,
     items: [
       { href: '/contabilidad/dashboard', label: 'Dashboard',  icon: HomeIcon,     permission: null },
       { href: '/contabilidad/periodos',  label: 'Períodos',   icon: CalendarIcon, permission: PERMISSIONS.CONTA_PERIODOS_VIEW },
@@ -17,6 +19,7 @@ const nav = [
   },
   {
     group: 'MOVIMIENTOS',
+    feature: null,
     items: [
       { href: '/contabilidad/libro-diario',       label: 'Libro Diario',  icon: BookIcon,       permission: PERMISSIONS.CONTA_DIARIO_VIEW },
       { href: '/contabilidad/libro-diario/nuevo', label: 'Nuevo Asiento', icon: PlusSquareIcon, permission: PERMISSIONS.CONTA_DIARIO_CREATE },
@@ -25,11 +28,12 @@ const nav = [
   },
   {
     group: 'DOCUMENTOS SII',
+    feature: 'documentos_sii' as const,
     items: [
-      { href: '/contabilidad/documentos-sii', label: 'Documentos',   icon: FileTextIcon,      permission: PERMISSIONS.CONTA_SII_VIEW },
-      { href: '/contabilidad/importar-sii',   label: 'Importar SII',    icon: CloudDownloadIcon, permission: PERMISSIONS.CONTA_SII_IMPORT },
-      { href: '/contabilidad/validaciones',   label: 'Validaciones IA', icon: SparklesIcon,      permission: PERMISSIONS.CONTA_VALIDACIONES_VIEW },
-      { href: '/contabilidad/ia-agente',      label: 'Agente IA',       icon: BotIcon,           permission: PERMISSIONS.CONTA_VALIDACIONES_MANAGE },
+      { href: '/contabilidad/documentos-sii', label: 'Documentos',      icon: FileTextIcon,      permission: PERMISSIONS.CONTA_SII_VIEW,             feature: null },
+      { href: '/contabilidad/importar-sii',   label: 'Importar SII',    icon: CloudDownloadIcon, permission: PERMISSIONS.CONTA_SII_IMPORT,            feature: null },
+      { href: '/contabilidad/validaciones',   label: 'Validaciones IA', icon: SparklesIcon,      permission: PERMISSIONS.CONTA_VALIDACIONES_VIEW,     feature: 'ia_asistente' as const },
+      { href: '/contabilidad/ia-agente',      label: 'Agente IA',       icon: BotIcon,           permission: PERMISSIONS.CONTA_VALIDACIONES_MANAGE,   feature: 'ia_asistente' as const },
     ],
   },
   {
@@ -53,16 +57,18 @@ const nav = [
   },
   {
     group: 'MAESTROS',
+    feature: null,
     items: [
-      { href: '/contabilidad/plan-cuentas',  label: 'Plan de Cuentas',  icon: TreeIcon,     permission: PERMISSIONS.CONTA_PLAN_VIEW },
-      { href: '/contabilidad/centros-costo', label: 'Centros de Costo', icon: BuildingIcon, permission: PERMISSIONS.CONTA_PLAN_VIEW },
-      { href: '/contabilidad/auxiliares',    label: 'Auxiliares',       icon: UsersIcon,    permission: PERMISSIONS.CONTA_AUXILIARES_VIEW },
+      { href: '/contabilidad/plan-cuentas',  label: 'Plan de Cuentas',  icon: TreeIcon,     permission: PERMISSIONS.CONTA_PLAN_VIEW,      feature: null },
+      { href: '/contabilidad/centros-costo', label: 'Centros de Costo', icon: BuildingIcon, permission: PERMISSIONS.CONTA_PLAN_VIEW,      feature: null },
+      { href: '/contabilidad/auxiliares',    label: 'Auxiliares',       icon: UsersIcon,    permission: PERMISSIONS.CONTA_AUXILIARES_VIEW, feature: null },
     ],
   },
   {
     group: 'CONFIGURACIÓN',
+    feature: null,
     items: [
-      { href: '/contabilidad/configuracion', label: 'Empresa / SII', icon: SettingsIcon, permission: PERMISSIONS.CONTA_CONFIG_VIEW },
+      { href: '/contabilidad/configuracion', label: 'Empresa / SII', icon: SettingsIcon, permission: PERMISSIONS.CONTA_CONFIG_VIEW, feature: null },
     ],
   },
 ]
@@ -76,8 +82,9 @@ interface SidebarProps {
 export function Sidebar({ profile, onLogout, onSwitchCompany }: SidebarProps) {
   const pathname = usePathname()
   const [companyMenuOpen, setCompanyMenuOpen] = useState(false)
-  const perms = profile.permissions ?? []
-  const multiCompany = profile.companies.length > 1
+  const perms    = profile.permissions ?? []
+  const features = profile.features ?? []
+  const multiCompany    = profile.companies.length > 1
   const canAccessSistema = hasAnyPermission(perms, [PERMISSIONS.SISTEMA_USUARIOS, PERMISSIONS.SISTEMA_ROLES])
 
   return (
@@ -138,8 +145,11 @@ export function Sidebar({ profile, onLogout, onSwitchCompany }: SidebarProps) {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-5">
         {nav.map(group => {
+          // Ocultar grupo completo si la feature del grupo no está activa
+          if (group.feature && !hasFeature(features, group.feature)) return null
           const visibleItems = group.items.filter(item =>
-            item.permission === null || hasPermission(perms, item.permission)
+            (item.permission === null || hasPermission(perms, item.permission)) &&
+            (!('feature' in item) || item.feature === null || hasFeature(features, item.feature as any))
           )
           if (visibleItems.length === 0) return null
           return (
@@ -203,7 +213,18 @@ export function Sidebar({ profile, onLogout, onSwitchCompany }: SidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-border p-3">
+      <div className="border-t border-border p-3 space-y-1">
+        {profile.is_superadmin && (
+          <Link
+            href="/superadmin"
+            className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-warning hover:bg-warning/10 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l14 9-14 9V3z" />
+            </svg>
+            Panel Superadmin
+          </Link>
+        )}
         <div className="flex items-center gap-2 px-2 py-2 rounded-lg">
           <div className="w-7 h-7 rounded-full bg-surface-high flex items-center justify-center shrink-0">
             <span className="text-xs font-semibold text-text-secondary">

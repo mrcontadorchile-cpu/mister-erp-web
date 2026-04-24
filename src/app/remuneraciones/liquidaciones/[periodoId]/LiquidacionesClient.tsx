@@ -4,6 +4,10 @@ import { calcularLiquidacion, calcularTodasLiquidaciones, aprobarLiquidacion, ag
 import { formatCLP } from '@/lib/utils'
 import { useState } from 'react'
 
+function toastError(err: unknown) {
+  alert(err instanceof Error ? err.message : 'Error inesperado')
+}
+
 interface Empleado {
   id: string
   nombres: string
@@ -54,6 +58,8 @@ export function LiquidacionesClient({
     setLoading(empleadoId)
     try {
       await calcularLiquidacion(empleadoId, periodoId)
+    } catch (err) {
+      toastError(err)
     } finally {
       setLoading(null)
     }
@@ -63,6 +69,8 @@ export function LiquidacionesClient({
     setLoading('ALL')
     try {
       await calcularTodasLiquidaciones(periodoId)
+    } catch (err) {
+      toastError(err)
     } finally {
       setLoading(null)
     }
@@ -72,6 +80,8 @@ export function LiquidacionesClient({
     setLoading(liquidacionId)
     try {
       await aprobarLiquidacion(liquidacionId, periodoId)
+    } catch (err) {
+      toastError(err)
     } finally {
       setLoading(null)
     }

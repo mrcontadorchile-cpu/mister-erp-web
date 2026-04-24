@@ -78,20 +78,36 @@ export async function GET(request: NextRequest) {
 
           invitedCompanyId = inv.company_id
 
-          // Crear/actualizar perfil con la empresa correcta.
-          // user_profiles.company_id es NOT NULL — no se puede insertar null.
-          // Hacemos upsert con ignoreDuplicates: false para actualizar si ya existe.
-          await admin.from('user_profiles').upsert({
-            id:         data.user.id,
-            full_name:  fullName,
-            role:       'admin',
-            company_id: inv.company_id,
-          }, { onConflict: 'id', ignoreDuplicates: false })
+          // Verificar si el perfil ya existe con empresa (usuario ya registrado)
+          const { data: existingProfile } = await admin
+            .from('user_profiles')
+            .select('company_id')
+            .eq('id', data.user.id)
+            .maybeSingle()
+
+          if (!existingProfile) {
+            // Usuario nuevo: crear perfil con la empresa de la invitación
+            await admin.from('user_profiles').insert({
+              id:         data.user.id,
+              full_name:  fullName,
+              role:       'admin',
+              company_id: inv.company_id,
+            })
+          } else if (!existingProfile.company_id) {
+            // Perfil existe pero sin empresa: actualizar
+            await admin.from('user_profiles')
+              .update({ company_id: inv.company_id })
+              .eq('id', data.user.id)
+          }
+          // Si el perfil ya tiene empresa, NO cambiar — el usuario
+          // simplemente ganó acceso a una empresa adicional.
         }
       }
 
-      // ── Fallback: email-based (para flujos sin token) ───────────────────
-      if (!invitedCompanyId && data.user.email) {
+      // ── Fallback: email-based (solo en flujos de invitación explícita) ────
+      // IMPORTANTE: solo correr si type==='invite' para evitar que logins
+      // normales acepten invitaciones pendientes y cambien la empresa activa.
+      if (!invitedCompanyId && data.user.email && type === 'invite') {
         const { data: accepted } = await db.rpc('accept_invitation', {
           p_user_id: data.user.id,
           p_email:   data.user.email,

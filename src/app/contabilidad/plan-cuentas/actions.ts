@@ -49,16 +49,27 @@ export async function updateAccount(id: string, data: {
   name: string
   type: string
   nature: string
+  parent_id: string | null
   allows_entry:         boolean
   cost_center_required: boolean
   has_auxiliary:        boolean
 }) {
   const supabase = await createClient()
+
+  let level = 1
+  if (data.parent_id) {
+    const { data: parent } = await supabase
+      .schema('conta').from('accounts').select('level').eq('id', data.parent_id).single()
+    level = (parent?.level ?? 0) + 1
+  }
+
   const { error } = await supabase.schema('conta').from('accounts').update({
     code:                 data.code,
     name:                 data.name,
     type:                 data.type,
     nature:               data.nature,
+    parent_id:            data.parent_id || null,
+    level,
     allows_entry:         data.allows_entry,
     cost_center_required: data.cost_center_required,
     has_auxiliary:        data.has_auxiliary,

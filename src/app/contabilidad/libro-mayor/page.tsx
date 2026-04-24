@@ -246,7 +246,7 @@ export default async function LibroMayorPage({
   const periodLabel     = acum ? `Enero — ${monthName(month)} ${year}` : `${monthName(month)} ${year}`
 
   return (
-    <div className="p-8 max-w-7xl mx-auto print:p-4">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto print:p-4">
       <div className="flex items-center justify-between mb-6 print:mb-3">
         <div>
           <h1 className="text-2xl font-bold">Libro Mayor</h1>
@@ -272,7 +272,7 @@ export default async function LibroMayorPage({
 
       {/* ── KPIs rápidos ── */}
       {sections.length > 0 && (
-        <div className="grid grid-cols-4 gap-3 mb-5 print:hidden">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5 print:hidden">
           <KpiCard label="Cuentas con movimientos" value={String(sections.length)} />
           <KpiCard label="Total movimientos" value={String(totalMovs)} />
           <KpiCard label="Total DEBE" value={formatCLP(grandTotalDebe)} color="text-info" />

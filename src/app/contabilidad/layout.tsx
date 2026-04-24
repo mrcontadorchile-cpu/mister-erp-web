@@ -10,7 +10,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('role, full_name, company_id, companies(id, name, rut)')
+    .select('role, full_name, company_id, is_superadmin, companies(id, name, rut)')
     .eq('id', user.id)
     .single()
 
@@ -19,16 +19,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const activeCompany = profile.companies as unknown as { id: string; name: string; rut: string } | null
   const companyId = profile.company_id as string
 
-  // Load permissions via SECURITY DEFINER function (avoids RLS circular dependency)
-  const { data: permData } = await supabase
-    .rpc('get_user_permissions', { p_user_id: user.id, p_company_id: companyId })
+  const [permData, companiesData, featuresData] = await Promise.all([
+    supabase.rpc('get_user_permissions', { p_user_id: user.id, p_company_id: companyId }),
+    supabase.rpc('get_user_companies',   { p_user_id: user.id }),
+    supabase.rpc('get_company_features', { p_company_id: companyId }),
+  ])
 
-  // Load all companies via SECURITY DEFINER function
-  const { data: companiesData } = await supabase
-    .rpc('get_user_companies', { p_user_id: user.id })
-
-  const permissions: string[] = (permData as string[] | null) ?? ['*']
-  const allCompanies = (companiesData as { id: string; name: string; rut: string }[] | null) ?? (activeCompany ? [activeCompany] : [])
+  const permissions: string[] = (permData.data as string[] | null) ?? ['*']
+  const allCompanies = (companiesData.data as { id: string; name: string; rut: string }[] | null) ?? (activeCompany ? [activeCompany] : [])
+  const features: string[] = (featuresData.data as { feature: string }[] | null)?.map(f => f.feature) ?? []
 
   const userProfile = {
     id: user.id,
@@ -39,6 +38,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     company_rut: activeCompany?.rut ?? '',
     permissions,
     companies: allCompanies,
+    features,
+    is_superadmin: (profile.is_superadmin as boolean) ?? false,
   }
 
   return <DashboardShell profile={userProfile}>{children}</DashboardShell>

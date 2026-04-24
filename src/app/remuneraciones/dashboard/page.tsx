@@ -60,7 +60,7 @@ export default async function RemuDashboardPage() {
   const company = profile?.companies as unknown as { name: string } | null
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-4 md:p-8 max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-text-primary">Remuneraciones</h1>
@@ -106,7 +106,7 @@ export default async function RemuDashboardPage() {
       )}
 
       {/* KPIs */}
-      <div className="grid grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         <KpiCard label="Empleados activos"       value={String(empleadosActivos)} color="#4CAF50" icon="👥" />
         <KpiCard label="Liquidaciones del mes"   value={String(liquidacionesMes)} color="#2196F3" icon="📋" />
         <KpiCard

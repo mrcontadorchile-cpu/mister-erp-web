@@ -95,7 +95,7 @@ export function PlanCuentasClient({ accounts }: Props) {
     setError('')
     startTransition(async () => {
       const result = editId
-        ? await updateAccount(editId, form)
+        ? await updateAccount(editId, { ...form, parent_id: form.parent_id || null })
         : await createAccount(form)
       if (result.error) { setError(result.error); return }
       setModalOpen(false)
@@ -157,7 +157,7 @@ export function PlanCuentasClient({ accounts }: Props) {
       </div>
 
       {/* Tabla */}
-      <div className="card overflow-hidden">
+      <div className="card overflow-hidden overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="table-header">
@@ -320,7 +320,8 @@ export function PlanCuentasClient({ accounts }: Props) {
               >
                 <option value="">Sin padre (nivel 1)</option>
                 {accounts
-                  .filter(a => a.type === form.type && !a.allows_entry)
+                  .filter(a => a.type === form.type && a.id !== editId)
+                  .sort((a, b) => a.code.localeCompare(b.code))
                   .map(a => (
                     <option key={a.id} value={a.id}>{a.code} — {a.name}</option>
                   ))}

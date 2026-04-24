@@ -129,7 +129,7 @@ export default async function AnalisisPorCuentaPage({
     iso ? new Date(iso + 'T12:00:00').toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
 
       {/* Encabezado */}
       <div className="flex items-start justify-between mb-6">
@@ -142,7 +142,7 @@ export default async function AnalisisPorCuentaPage({
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <div className="card p-4">
           <p className="text-xs text-text-disabled mb-1">Cuentas con documentos</p>
           <p className="font-bold text-xl font-mono">{groupMap.size}</p>
@@ -206,7 +206,7 @@ export default async function AnalisisPorCuentaPage({
         {groups.map(g => {
           const color = accountTypeColor(g.account_type as AccountType)
           return (
-            <div key={g.account_id} className="card overflow-hidden">
+            <div key={g.account_id} className="card overflow-hidden overflow-x-auto">
 
               {/* Cabecera de cuenta */}
               <div className="px-5 py-3.5 border-b border-border flex items-center justify-between gap-4"

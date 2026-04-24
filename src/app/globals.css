@@ -65,4 +65,14 @@
   .table-row {
     @apply border-b border-border hover:bg-surface-high/50 transition-colors;
   }
+
+  /* Tablas con scroll horizontal en móvil */
+  .table-responsive {
+    @apply w-full overflow-x-auto -mx-0;
+  }
+
+  /* Páginas con padding estándar — menos en móvil */
+  .page-container {
+    @apply px-4 py-5 md:px-8 md:py-8;
+  }
 }

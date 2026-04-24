@@ -154,6 +154,20 @@ export interface UserProfile {
   permissions: string[]
   /** All companies this user belongs to */
   companies: { id: string; name: string; rut: string }[]
+  /** Active features/modules contracted for this company. Empty = all enabled (legacy) */
+  features: string[]
+  /** Whether this user is a global superadmin */
+  is_superadmin?: boolean
+}
+
+export type CompanyFeature = 'contabilidad' | 'remuneraciones' | 'ia_asistente' | 'ia_documentos' | 'documentos_sii'
+
+export const FEATURE_LABELS: Record<CompanyFeature, { label: string; desc: string; icon: string }> = {
+  contabilidad:   { label: 'Contabilidad',         desc: 'Libro diario, mayor, plan de cuentas, reportes', icon: '📒' },
+  remuneraciones: { label: 'Remuneraciones',        desc: 'Liquidaciones, cotizaciones y finiquitos',       icon: '👥' },
+  documentos_sii: { label: 'Documentos SII',        desc: 'Importación y validación de documentos del SII', icon: '🧾' },
+  ia_asistente:   { label: 'Agente IA',             desc: 'Asistente contable conversacional con IA',       icon: '✨' },
+  ia_documentos:  { label: 'Lector de Documentos',  desc: 'IA que lee facturas, boletas y PDFs',            icon: '📄' },
 }
 
 export interface EntidadMapeo {

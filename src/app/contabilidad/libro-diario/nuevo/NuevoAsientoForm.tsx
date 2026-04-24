@@ -7,6 +7,8 @@ import { DOC_TYPES, docTypeShort } from '@/lib/doc-types'
 import { createJournalEntry, getOpenDocuments } from '../actions'
 import type { OpenDoc } from '../actions'
 import type { Account, CostCenter, AccountType } from '@/types/database'
+import { TemplatePanel } from './TemplatePanel'
+import type { Template, TemplateLine } from './templateActions'
 
 type AccRow = Pick<Account, 'id' | 'code' | 'name' | 'type' | 'nature' | 'cost_center_required'> & { has_auxiliary: boolean }
 type CCRow  = Pick<CostCenter, 'id' | 'code' | 'name'>
@@ -39,15 +41,37 @@ interface Props {
   accounts:    AccRow[]
   costCenters: CCRow[]
   auxiliaries: AuxRow[]
+  templates:   Template[]
 }
 
-export function NuevoAsientoForm({ accounts, costCenters, auxiliaries }: Props) {
+export function NuevoAsientoForm({ accounts, costCenters, auxiliaries, templates }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [glosa, setGlosa]   = useState('')
   const [date, setDate]     = useState(new Date().toISOString().split('T')[0])
   const [lines, setLines]   = useState<Line[]>([newLine(0), newLine(1)])
   const [error, setError]   = useState('')
+
+  // Cargar plantilla → rellena glosa + líneas
+  function handleLoadTemplate(templateGlosa: string, templateLines: TemplateLine[]) {
+    if (templateGlosa) setGlosa(templateGlosa)
+    if (templateLines.length > 0) {
+      lineCounter = templateLines.length
+      setLines(templateLines.map((tl, i) => ({
+        id:             i,
+        account_id:     tl.account_id,
+        cost_center_id: tl.cost_center_id ?? '',
+        auxiliary_id:   tl.auxiliary_id   ?? '',
+        doc_type:       tl.doc_type        ?? '',
+        doc_number:     '',
+        ref_doc_type:   '',
+        ref_doc_number: '',
+        debit:          tl.debit  > 0 ? String(tl.debit)  : '',
+        credit:         tl.credit > 0 ? String(tl.credit) : '',
+        description:    tl.description,
+      })))
+    }
+  }
 
   // Cache de documentos abiertos por auxiliar
   const [openDocsCache, setOpenDocsCache] = useState<Map<string, OpenDoc[]>>(new Map())
@@ -146,28 +170,45 @@ export function NuevoAsientoForm({ accounts, costCenters, auxiliaries }: Props) 
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold">Nuevo Asiento Contable</h1>
           <p className="text-text-secondary text-sm mt-1">Ingresa la partida doble</p>
         </div>
-        <button
-          onClick={() => router.back()}
-          className="btn-ghost flex items-center gap-2 text-sm"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Volver
-        </button>
+        <div className="flex items-center gap-2">
+          <TemplatePanel
+            templates={templates}
+            currentGlosa={glosa}
+            currentLines={lines.map(l => ({
+              account_id:     l.account_id,
+              cost_center_id: l.cost_center_id || null,
+              auxiliary_id:   l.auxiliary_id   || null,
+              doc_type:       l.doc_type        || null,
+              debit:          parseFloat(l.debit)  || 0,
+              credit:         parseFloat(l.credit) || 0,
+              description:    l.description,
+            }))}
+            onLoad={handleLoadTemplate}
+          />
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="btn-ghost flex items-center gap-2 text-sm"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Volver
+          </button>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Cabecera */}
         <div className="card p-5">
           <h2 className="text-sm font-bold text-text-primary mb-4">Datos del Asiento</h2>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="text-xs text-text-disabled block mb-1">Fecha *</label>
               <input

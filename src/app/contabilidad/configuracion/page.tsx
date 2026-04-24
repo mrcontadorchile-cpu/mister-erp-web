@@ -33,7 +33,7 @@ export default async function ConfiguracionPage() {
     .maybeSingle()
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="p-4 md:p-8 max-w-3xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold">Configuración</h1>
         <p className="text-text-secondary text-sm mt-1">

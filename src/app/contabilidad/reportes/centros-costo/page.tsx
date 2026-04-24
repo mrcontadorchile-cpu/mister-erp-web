@@ -230,7 +230,7 @@ export default async function ReporteCentrosCostoPage({
         /* ── VISTA RESUMEN ── */
         <div className="space-y-4">
           {/* Tarjetas summary */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div className="card p-4">
               <p className="text-xs text-text-disabled mb-1">Total Débito (Gastos)</p>
               <p className="text-xl font-bold font-mono text-info">
@@ -252,7 +252,7 @@ export default async function ReporteCentrosCostoPage({
           </div>
 
           {/* Tabla resumen */}
-          <div className="card overflow-hidden">
+          <div className="card overflow-hidden overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="table-header">
@@ -314,7 +314,7 @@ export default async function ReporteCentrosCostoPage({
         /* ── VISTA DETALLE ── */
         <div className="space-y-6">
           {detail.map(cc => (
-            <div key={cc.cc_id} className="card overflow-hidden">
+            <div key={cc.cc_id} className="card overflow-hidden overflow-x-auto">
               {/* Header CC */}
               <div className="px-4 py-3 bg-primary/5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-3">

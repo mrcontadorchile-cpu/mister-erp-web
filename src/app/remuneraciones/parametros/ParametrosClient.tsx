@@ -54,7 +54,7 @@ export function SincronizarIndicadoresButton({ ufEnBD, utmEnBD, ultimaSync }: Si
   return (
     <div className="space-y-4">
       {/* Indicadores actuales */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="p-4 bg-surface-high rounded-lg">
           <p className="text-[10px] text-text-disabled uppercase tracking-wide mb-1">UF</p>
           <p className="text-xl font-black text-text-primary">
@@ -73,7 +73,7 @@ export function SincronizarIndicadoresButton({ ufEnBD, utmEnBD, ultimaSync }: Si
 
       {/* Topes calculados */}
       {resultado && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="p-4 bg-success/5 border border-success/20 rounded-lg">
             <p className="text-[10px] text-text-disabled uppercase tracking-wide mb-1">
               Tope AFP + Salud (90 UF)

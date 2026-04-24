@@ -28,7 +28,7 @@ export default async function EmpleadosPage() {
   const inactivos = (empleados ?? []).filter(e => e.estado === 'inactivo').length
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-4 md:p-8 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -51,8 +51,8 @@ export default async function EmpleadosPage() {
           </Link>
         </div>
       ) : (
-        <div className="card overflow-hidden">
-          <table className="w-full">
+        <div className="card overflow-hidden overflow-x-auto">
+          <table className="w-full min-w-[600px]">
             <thead>
               <tr className="table-header">
                 <th className="px-4 py-3 text-left">Nombre</th>

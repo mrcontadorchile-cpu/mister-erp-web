@@ -27,12 +27,10 @@ function AceptarInvitacionContent() {
     }
 
     const supabase = createClient()
-    supabase
-      .from('user_invitations')
-      .select('company_id, expires_at, accepted_at, companies(name)')
-      .eq('token', token)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(supabase.rpc as any)('get_invitation_by_token', { p_token: token })
       .maybeSingle()
-      .then(({ data, error }) => {
+      .then(({ data, error }: { data: { company_name: string; expires_at: string; accepted_at: string | null } | null; error: unknown }) => {
         if (error || !data) {
           setTokenError('Este link de invitación no es válido.')
         } else if (data.accepted_at) {
@@ -40,8 +38,7 @@ function AceptarInvitacionContent() {
         } else if (new Date(data.expires_at) < new Date()) {
           setTokenError('Esta invitación ha expirado. Pide al administrador que te envíe una nueva.')
         } else {
-          const company = data.companies as unknown as { name: string } | null
-          setCompanyName(company?.name ?? 'tu empresa')
+          setCompanyName(data.company_name ?? 'tu empresa')
         }
         setLoading(false)
       })

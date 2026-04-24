@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatCLP, taxDocTypeLabel } from '@/lib/utils'
+import { DocumentosSiiExport } from './DocumentosSiiExport'
 
 export default async function DocumentosSiiPage({
   searchParams,
@@ -27,7 +28,7 @@ export default async function DocumentosSiiPage({
   const { data: docs } = await query
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold">Documentos Tributarios</h1>
@@ -35,9 +36,18 @@ export default async function DocumentosSiiPage({
             {docs?.length ?? 0} documentos
           </p>
         </div>
-        <a href="/importar-sii" className="btn-primary px-4 py-2 text-sm">
-          + Importar SII
-        </a>
+        <div className="flex items-center gap-2">
+          {(docs?.length ?? 0) > 0 && (
+            <DocumentosSiiExport
+              docs={docs ?? []}
+              companyName=""
+              filterLabel={[params.type, params.status].filter(Boolean).join(' · ') || undefined}
+            />
+          )}
+          <a href="/importar-sii" className="btn-primary px-4 py-2 text-sm">
+            + Importar SII
+          </a>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -64,8 +74,8 @@ export default async function DocumentosSiiPage({
           Sin documentos para los filtros seleccionados
         </div>
       ) : (
-        <div className="card overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="card overflow-hidden overflow-x-auto">
+          <table className="w-full text-sm min-w-[720px]">
             <thead>
               <tr className="table-header">
                 <th className="px-4 py-3 text-left">Tipo</th>

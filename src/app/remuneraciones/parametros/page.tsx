@@ -51,7 +51,7 @@ export default async function ParametrosPage() {
   const desactualizado = !syncUF || (Date.now() - (syncUF?.getTime() ?? 0)) > 24 * 60 * 60 * 1000
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-4 md:p-8 max-w-4xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-text-primary">Parámetros Legales</h1>
         <p className="text-text-secondary text-sm mt-1">
@@ -84,7 +84,7 @@ export default async function ParametrosPage() {
       {/* Topes legales */}
       <div className="card p-5 mb-6">
         <h2 className="text-sm font-semibold text-text-primary mb-4">Topes Imponibles Vigentes {year}</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="p-4 bg-surface-high rounded-lg">
             <p className="text-[10px] text-text-disabled uppercase tracking-wide mb-2">AFP + Salud</p>
             <p className="text-xs text-text-disabled">{rowTopeUF?.valor ?? 90} UF</p>

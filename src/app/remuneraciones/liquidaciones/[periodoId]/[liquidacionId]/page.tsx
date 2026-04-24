@@ -37,7 +37,7 @@ export default async function DetalleLiquidacionPage({
   const descuentos = lineas.filter(l => l.tipo === 'descuento')
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="p-4 md:p-8 max-w-3xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-3 mb-8 text-sm">
         <Link href="/remuneraciones/liquidaciones" className="text-text-disabled hover:text-text-primary">
@@ -77,7 +77,7 @@ export default async function DetalleLiquidacionPage({
             </span>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-4 mt-5 pt-5 border-t border-border">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5 pt-5 border-t border-border">
           <div>
             <p className="text-xs text-text-disabled">Días trabajados</p>
             <p className="text-sm font-semibold text-text-primary">{liq.dias_trabajados} días</p>

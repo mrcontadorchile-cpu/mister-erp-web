@@ -14,7 +14,7 @@ export default async function NuevoEmpleadoPage() {
   const isapres = isapreRes.data ?? []
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
+    <div className="p-4 md:p-8 max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-8">
         <Link href="/remuneraciones/empleados" className="text-text-disabled hover:text-text-primary">
           ← Empleados
@@ -29,7 +29,7 @@ export default async function NuevoEmpleadoPage() {
           <h2 className="text-sm font-semibold text-text-primary mb-5 pb-3 border-b border-border">
             Datos Personales
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">RUT *</label>
               <input name="rut" required placeholder="12.345.678-9" className="input" />
@@ -79,7 +79,7 @@ export default async function NuevoEmpleadoPage() {
           <h2 className="text-sm font-semibold text-text-primary mb-5 pb-3 border-b border-border">
             Datos Laborales
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">Cargo *</label>
               <input name="cargo" required className="input" />
@@ -119,7 +119,7 @@ export default async function NuevoEmpleadoPage() {
           <h2 className="text-sm font-semibold text-text-primary mb-5 pb-3 border-b border-border">
             Remuneración y Previsión
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-text-secondary mb-1.5">Sueldo Base (CLP) *</label>
               <input name="sueldo_base" type="number" required min={0} step={1000} className="input" placeholder="500000" />

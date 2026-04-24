@@ -45,7 +45,7 @@ export default async function PreviredPage({
   ).data ?? [] : []
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-4 md:p-8 max-w-5xl mx-auto">
       <div className="flex items-start justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Previred</h1>

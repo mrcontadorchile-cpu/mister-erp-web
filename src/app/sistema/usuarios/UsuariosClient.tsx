@@ -154,13 +154,13 @@ export function UsuariosClient({ members, roles, currentUserId, pendingInvitatio
 
       {/* Pending invitations */}
       {pendingInvitations.length > 0 && (
-        <div className="card overflow-hidden">
+        <div className="card overflow-hidden overflow-x-auto">
           <div className="px-4 py-3 border-b border-border">
             <p className="text-xs font-semibold text-text-disabled uppercase tracking-wider">
               Invitaciones pendientes ({pendingInvitations.length})
             </p>
           </div>
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[400px]">
             <tbody>
               {pendingInvitations.map(inv => {
                 const expired = new Date(inv.expires_at) < new Date()
@@ -230,8 +230,8 @@ export function UsuariosClient({ members, roles, currentUserId, pendingInvitatio
       )}
 
       {/* Members table */}
-      <div className="card overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="card overflow-hidden overflow-x-auto">
+        <table className="w-full text-sm min-w-[520px]">
           <thead>
             <tr className="table-header text-xs">
               <th className="px-4 py-3 text-left">Usuario</th>

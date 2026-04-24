@@ -7,11 +7,9 @@ export const metadata = { title: 'Validaciones IA — Contabilidad' }
 export default async function ValidacionesPage() {
   const supabase = await createClient()
 
-  // getUser + profile en paralelo para evitar cascada
-  const [{ data: { user } }, { data: profile }] = await Promise.all([
-    supabase.auth.getUser(),
-    supabase.from('user_profiles').select('company_id').single(),
-  ])
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: profile } = await supabase
+    .from('user_profiles').select('company_id').eq('id', user!.id).single()
 
   const companyId = profile?.company_id as string
 

@@ -27,6 +27,7 @@ export default async function RemuneracionesLayout({ children }: { children: Rea
     company_rut: company?.rut ?? '',
     permissions: ['*'] as string[],
     companies: company ? [company] : [] as { id: string; name: string; rut: string }[],
+    features: [] as string[], // empty = all enabled
   }
 
   return <RemuShell profile={userProfile}>{children}</RemuShell>
