@@ -114766,20 +114766,20 @@ l=A.bZ(A.aS(n),A.b5(n),A.bu(n),23,59,59,0)
 e=$.bk()
 d=e.b
 d===$&&A.a()
-d=d.cL("inventory_transactions").hk(0,"total_price").cu("location_id",o.a.c).cu("type","VENTA")
+d=d.cL("inventory_transactions").hk(0,"total_amount").cu("location_id",o.a.c).cu("type","VENTA")
 d=A.ig(d.jB(d.j4("created_at","gte."+m.iN())),d.$ti.c)
 s=6
 return A.j(A.ig(d.jB(d.j4("created_at","lte."+l.iN())),d.$ti.c),$async$rz)
 case 6:k=a1
 j=J.bai(k,0,new A.aLE())
-d=e.b.cL("inventory_transactions").hk(0,"total_price").cu("location_id",o.a.c).cu("type","COMPRA")
+d=e.b.cL("inventory_transactions").hk(0,"total_amount").cu("location_id",o.a.c).cu("type","COMPRA")
 d=A.ig(d.jB(d.j4("created_at","gte."+m.iN())),d.$ti.c)
 s=7
 return A.j(A.ig(d.jB(d.j4("created_at","lte."+l.iN())),d.$ti.c),$async$rz)
 case 7:i=a1
 h=J.bai(i,0,new A.aLF())
 s=8
-return A.j(e.b.cL("inventory_transactions").hk(0,"id, type, total_price, quantity, created_at, location_products!inner(products_global!inner(name))").cu("location_id",o.a.c).ua(0,"created_at",!1).BZ(5),$async$rz)
+return A.j(e.b.cL("inventory_transactions").hk(0,"id, type, total_amount, quantity, created_at, location_products!inner(products_global!inner(name))").cu("location_id",o.a.c).ua(0,"created_at",!1).BZ(5),$async$rz)
 case 8:g=a1
 e=J.d0(g,new A.aLG(),t.Nn)
 c=A.a1(e,e.$ti.i("aq.E"))
@@ -114834,19 +114834,19 @@ A.aLD.prototype={
 $0(){return this.a.r=!0},
 $S:0}
 A.aLE.prototype={
-$2(a,b){var s=A.ed(J.ap(b,"total_price"))
+$2(a,b){var s=A.ed(J.ap(b,"total_amount"))
 if(s==null)s=null
 return a+(s==null?0:s)},
 $S:257}
 A.aLF.prototype={
-$2(a,b){var s=A.ed(J.ap(b,"total_price"))
+$2(a,b){var s=A.ed(J.ap(b,"total_amount"))
 if(s==null)s=null
 return a+(s==null?0:s)},
 $S:257}
 A.aLG.prototype={
 $1(a){var s,r=J.af(a),q=r.h(a,"location_products"),p=q!=null?J.ap(q,"products_global"):null,o=p!=null?A.aD(J.ap(p,"name")):null,n=o==null?"Producto":o,m=A.aD(r.h(a,"type"))
 if(m==null)m=""
-s=A.ed(r.h(a,"total_price"))
+s=A.ed(r.h(a,"total_amount"))
 if(s==null)s=null
 if(s==null)s=0
 r=A.aD(r.h(a,"created_at"))
