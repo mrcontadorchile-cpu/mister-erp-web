@@ -95,12 +95,36 @@
 
     function MisterScannerStart(videoElementId, dartCallback) {
       if (typeof ZXing === 'undefined') {
-        setTimeout(function() { MisterScannerStart(videoElementId, dartCallback); }, 200);
+        setTimeout(function() { MisterScannerStart(videoElementId, dartCallback); }, 100);
         return;
       }
-      var codeReader = new ZXing.BrowserMultiFormatReader();
+
+      // Limitar formatos a los usados en inventario → más rápido por frame
+      var hints = new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+        ZXing.BarcodeFormat.EAN_13,
+        ZXing.BarcodeFormat.EAN_8,
+        ZXing.BarcodeFormat.CODE_128,
+        ZXing.BarcodeFormat.CODE_39,
+        ZXing.BarcodeFormat.QR_CODE,
+      ]);
+      hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+
+      // timeBetweenScansMillis = 0 → sin espera entre frames
+      var codeReader = new ZXing.BrowserMultiFormatReader(hints, 0);
       _zxingReader = codeReader;
-      codeReader.decodeFromVideoDevice(null, videoElementId, function(result, err) {
+
+      // Cámara trasera, resolución óptima para códigos, foco continuo
+      var constraints = {
+        video: {
+          facingMode: { ideal: 'environment' },
+          width:  { ideal: 1280 },
+          height: { ideal: 720 },
+          advanced: [{ focusMode: 'continuous' }]
+        }
+      };
+
+      codeReader.decodeFromConstraints(constraints, videoElementId, function(result, err) {
         if (result) {
           dartCallback(result.getText());
         }
